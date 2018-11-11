@@ -1,0 +1,67 @@
+\chapter{\textit{Genetic Kernels for Regression} (Proposta)} \label{chapter:gkr}
+Encontrar uma função kernel que se adapte a um determinado problema é um estágio crítico no desenvolvimento de métodos de aprendizagem baseados em kernels. Isso se deve muito ao fato da necessidade de se ter conhecimento \textit{a priori} sobre o problema \cite{shawe2004}. Como já dito na Seção \ref{chapter:introduction}, uma abordagem bastante utilizada por diversos pesquisadores é usar um conjunto de funções kernel já consolidadas na literatura. Outra abordagem, que vem ganhando bastante atenção nas últimos anos, é a criação de funções kernel específicas para um determinado problema.
+
+Uma forma possível para a criação de novas funções kernel é a utilização da construção em blocos. Esse modelo de construção utiliza propriedades de fechamento sobre as funções kernel que permite que novas funções sejam geradas a partir da combinação de outras já conhecidas. A proposição abaixo, retirada de \cite{shawe2004} lista quatro operações de fechamento que garantem a construção de novas funções kernel.
+
+{ \label{Prop1}
+Sejam $\kappa_1$ e $\kappa_2$ dois kernels sobre $\mathbf{X} \times \mathbf{X}, \mathbf{X} \subseteq
+\mathbb{R}^n,$ e $a \in \mathbb{R}^+$. Então as seguintes funções são kernels
+
+\begin{enumerate}
+\item $k(\mathbf{x},\mathbf{z}) = \kappa_1(\mathbf{x},\mathbf{z}) + \kappa_2(\mathbf{x},\mathbf{z})$,
+\item $k(\mathbf{x},\mathbf{z}) = \kappa_1(\mathbf{x},\mathbf{z}) * \kappa_2(\mathbf{x},\mathbf{z})$,
+\item $k(\mathbf{x},\mathbf{z}) = a \cdot \kappa_2(\mathbf{x},\mathbf{z})$,
+\item $k(\mathbf{x},\mathbf{z}) = e^{\kappa_1(\mathbf{x},\mathbf{z})}$.
+\end{enumerate}
+}
+
+Nossa proposta utiliza o algoritmo padrão da PG, onde os indivíduos são representados em forma de árvore. A Figura~\ref{KernelTree} mostra uma árvore kernel que pode ser gerada, a fins de exemplificação. A população inicial é criada utilizando uma combinação das propriedades de fechamendo e de STGP para criar novas funções kernel válidas e que permaneçam consistentes ao longo do processo de evolução. A consistência de cada indivíduo é mantida porque em STGP, além das restrições padrões da PG, novas restrições são adicionadas a cada nó. Utilizando a Figura~\ref{KernelTree} como exemplo: enquanto o nó que contém o kernel linear só pode receber como entrada duas matrizes que representam os dados, o kernel polinomial pode receber uma entrada extra (o grau do polinômio). Tanto o processo de geração de uma árvore gerada quanto o de alteração através dos operadores genéticos, deve obedecer a essas restrições, mantendo a árvore consistente.
+
+\begin{figure}[H]
+\caption{Exemplo de kernel que pode vir a ser criado pela PG.}
+\begin{center}
+\begin{tikzpicture}[->,>=stealth',auto,
+    level 1/.style={sibling distance=40mm},
+    level 2/.style={sibling distance=10mm}] \label{KernelTree}
+\node [arn_r] {+}
+    child{ node [arn_n] {Poly} 
+           child{ node [arn_l] {$\mathbf{X}$} }
+           child{ node [arn_l] {$\mathbf{Z}$} }
+           child{ node [arn_l] {$\mathbf{7}$} }
+    }
+    child{ node [arn_n] {Linear}
+           child{ node [arn_l] {$\mathbf{X}$} }
+           child{ node [arn_l] {$\mathbf{Z}$} }
+	}
+; 
+\end{tikzpicture}
+\end{center}
+\end{figure}
+
+O conjunto de terminais ${\mathcal T}$ é composto por duas matrizes ${\mathbf X}$ e ${\mathbf Z}$ que representam o conjunto de dados e de constantes efêmeras. O conjunto de operadores escolhidos é uma combinação dos operadores apresentados nesta seção com alguns kernels conhecidos, listados na tabela \ref{Tabela1}.
+
+\begin{table}
+\caption{Exemplos de funções kernels que podem ser utilizadas no processo de evolução.}
+\begin{center} \label{Tabela1}
+\begin{tabular}{l@{\hskip 18pt}l}
+\hline\noalign{\smallskip}
+\textbf{Kernel} & \textbf{Equação} \\
+\noalign{\smallskip}
+\hline
+\noalign{\smallskip}
+Cauchy 		& k(${\mathbf x}$,${\mathbf z}$) $= \frac{1}{1 + \frac{\|\mathbf{x} - \mathbf{z}\|^2}{\sigma}}$ \\
+Laplace		& k(${\mathbf x}$,${\mathbf z}$) $= e^{-\frac{\|\mathbf{x} - \mathbf{z}\|}{\sigma}}$ \\
+Linear		& k(${\mathbf x}$,${\mathbf z}$) $= \mathbf{x}^T\mathbf{z} + c$ \\
+Gaussian	& k(${\mathbf x}$,${\mathbf z}$) $= e^{-\frac{\|\mathbf{x} - \mathbf{z}\|^2}{2\sigma^2}}$ \\
+Polinomial	& k(${\mathbf x}$,${\mathbf z}$) $= (a\mathbf{x}^T\mathbf{z} + c)^d$ \\
+Sigmoid		& k(${\mathbf x}$,${\mathbf z}$) $= \tanh(a\mathbf{x}^T\mathbf{z} + c)$ \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+Um potencial problema que pode surgir durante a execução do algortimo da PG, é o que muito autores chamam de \textit{bloat}. Esse fenômeno faz com as árvores geradas cresçam sem que se tenha aumento na peformance. Por essa razão, pretende-se utilizar o método de seleção \textit{lexictour}, que tem preferência por indivíduos de menor tamanho caso haja empate de performance entre vários indivíduos.
+
+Para determinar o quão apto é um indivíduo, uma validação cruzada será utilizada sobre seu RMSE (\textit{root mean squared error}). Antes do processo de evolução de uma geração iniciar, algumas configurações importantes são feitas. O conjunto de dados é dividido em dois subconjuntos: treinamento e teste. O conjunto de treinamento, então, é dividido em 10 partes (\textit{folds}). O treinamento de cada indivíduo é executado durante 10 iterações, sempre deixando um \textit{fold} como um conjunto de validação independente. A aptidão de um indivíduo é dada pela média das 10 validações.
+
+Nosso método terá sua performance comparada com uma SVM treinada com kernels clássicos (linear, gaussiano e polinomial) e as redes neurais MLP e RBF. Vale salientar que o processo de validação cruzada é o mesmo para todas as técnicas, ou seja, todas são treinadas, validadas e testadas com a mesma divisão do conjunto de dados. Essa escolha permite que as comparações de performance sejam mais precisas.

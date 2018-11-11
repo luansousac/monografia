@@ -1,0 +1,366 @@
+\documentclass[
+    % -- opções da classe memoir --
+	12pt,				% tamanho da fonte
+	openright,			% capítulos começam sempre em página ímpar
+	twoside,			% para impressão em frente e verso. Oposto a oneside
+	a4paper,			% tamanho do papel
+	% -- opções do pacote babel --
+	english,			% idioma adicional para hifenização
+	french,				% idioma adicional para hifenização
+	spanish,			% idioma adicional para hifenização
+	brazil				% o último idioma é o principal do documento
+	]{abntex2}
+
+% ---
+% Pacotes básicos
+% ---
+\usepackage{lmodern}			% Usa a fonte Latin Modern
+\usepackage[utf8]{inputenc}		% Codificação do documento (conversão automática dos acentos)
+\usepackage[T1]{fontenc}		% Seleção de códigos de fonte.
+\usepackage{lastpage}			% Usado pela Ficha catalográfica
+\usepackage{indentfirst}		% Indenta o primeiro parágrafo de cada seção.
+\usepackage{color}				% Controle das cores
+\usepackage{graphicx}			% Inclusão de gráficos
+\usepackage{float}				% Habilitar opção H nos elementos
+\usepackage{microtype} 			% para melhorias de justificação
+
+% ---
+% Adicionado por Madson Dias
+% ---
+\newcommand{\eqname}[1]{\tag*{#1}}
+\usepackage{utils/ifce-template} 					    % Pacote com informações da customização
+\usepackage{utils/ifce-facilitadores} 				    % Pacote contendo comandos facilitadores
+\graphicspath{{figures/graphics/} {figures/images/}}    % Inclusão dos caminhos para imagens
+\usepackage{xstring} 								    % Criar comandos com IF
+\usepackage{caption}                                    % Pacote para legendas
+%\usepackage[portuguese, ruled, linesnumbered]{utils/algorithm2e}
+\usepackage{amsmath,amssymb}
+\usepackage{algorithm}
+\usepackage[noend]{algpseudocode}
+\include{utils/algoritmos}
+\setlist[itemize]{noitemsep, topsep=0pt, leftmargin=1.75cm}
+\setlength{\overfullrule}{5pt}
+
+
+% -------------------------
+% Adicionado por Luan Sousa
+% -------------------------
+
+\usepackage{lscape}
+\usepackage{mathtools}                          % Pacote para cálculos de posições
+\usepackage{multirow}                           % Pacote para multi-linhas em tabelas
+\usepackage[labelformat=simple]{subcaption}     % Para não adicionar parênteses adicionais
+\renewcommand\thesubfigure{(\alph{subfigure})}  % 1(a), ao invés de 1a
+\algdef{SE}{Begin}{End}{\textbf{início}}{\textbf{fim}}
+
+% Suprime avisos sobre "problemas" nas referências
+\pdfstringdefDisableCommands{\let\uppercase\relax}
+\pdfstringdefDisableCommands{\let\newline\relax}
+
+\errorcontextlines\maxdimen
+
+% begin vertical rule patch for algorithmicx (http://tex.stackexchange.com/questions/144840/vertical-loop-block-lines-in-algorithmicx-with-noend-option)
+\makeatletter
+% start with some helper code
+% This is the vertical rule that is inserted
+\newcommand*{\algrule}[1][\algorithmicindent]{\makebox[#1][l]{\hspace*{.5em}\vrule height .75\baselineskip depth .25\baselineskip}}%
+
+\newcount\ALG@printindent@tempcnta
+\def\ALG@printindent{%
+    \ifnum \theALG@nested>0% is there anything to print
+        \ifx\ALG@text\ALG@x@notext% is this an end group without any text?
+            % do nothing
+            \addvspace{-3pt}% FUDGE for cases where no text is shown, to make the rules line up
+        \else
+            \unskip
+            % draw a rule for each indent level
+            \ALG@printindent@tempcnta=1
+            \loop
+                \algrule[\csname ALG@ind@\the\ALG@printindent@tempcnta\endcsname]%
+                \advance \ALG@printindent@tempcnta 1
+            \ifnum \ALG@printindent@tempcnta<\numexpr\theALG@nested+1\relax% can't do <=, so add one to RHS and use < instead
+            \repeat
+        \fi
+    \fi
+    }%
+\usepackage{etoolbox}
+% the following line injects our new indent handling code in place of the default spacing
+\patchcmd{\ALG@doentity}{\noindent\hskip\ALG@tlm}{\ALG@printindent}{}{\errmessage{failed to patch}}
+\makeatother
+% end vertical rule patch for algorithmicx
+
+\usepackage{todonotes}
+\usepackage{tikz}
+\usepackage{textcomp}
+\usetikzlibrary{arrows,calc,matrix,positioning,shapes}
+
+\tikzset{
+  treenode/.style = {align=center, inner sep=1pt, circle, black, draw=none, fill=white, text
+  centered, font=\sffamily},
+  arn_n/.style = {treenode},
+  arn_r/.style = {treenode, inner sep=3pt},
+  arn_l/.style = {treenode, inner sep=3pt}
+}
+
+\newcommand\dboxed[1]{\tikz [baseline=(boxed word.base)] \node (boxed word) [draw, rectangle, dashed, line cap=round] {#1};}
+
+\usepackage[most]{tcolorbox}
+\newtcbox{\dbox}[1][]{
+    on line,
+    enhanced,
+    frame hidden,
+    interior hidden,
+    sharp corners,
+    size=small,
+    borderline={0.4pt}{0pt}{dashed},
+    #1
+}
+
+
+\hbadness=10000
+\newcolumntype{C}{>{\arraybackslash}p{5cm}}
+% -------------------------
+
+
+% ---
+% Pacotes adicionais, usados apenas no âmbito do Modelo Canônico do abnteX2
+% ---
+\usepackage{lipsum}	% para geração de lero-lero
+
+% ---
+% Pacotes de citações
+% ---
+\usepackage[brazilian,hyperpageref]{backref}  % Páginas com as citações na bibliografia
+\usepackage[alf]{abntex2cite}	              % Citações seguindo o padrão ABNT
+
+% ---
+% CONFIGURAÇÕES DE PACOTES
+% ---
+
+% ---
+% Configurações do pacote backref
+% Usado sem a opção hyperpageref de backref
+\renewcommand{\backrefpagesname}{Citado na(s) página(s):~}
+% Texto padrão antes do número das páginas
+\renewcommand{\backref}{}
+% Define os textos da citação
+\renewcommand*{\backrefalt}[4]{
+	\ifcase #1 %
+		Nenhuma citação no texto.%
+	\or
+		Citado na página #2.%
+	\else
+		Citado #1 vezes nas páginas #2.%
+	\fi}%
+% ---
+
+% ---
+% Informações de dados para CAPA e FOLHA DE ROSTO
+% ---
+\include{info}
+% ---
+
+% ---------------------------------------
+% Configurações de aparência do PDF final
+
+% alterando o aspecto da cor azul
+\definecolor{blue}{RGB}{0,0,0}
+\definecolor{my_black}{RGB}{51, 51, 51}
+\definecolor{my_gray}{RGB}{81, 81, 81}
+\definecolor{my_red}{RGB}{200, 0, 0}
+
+
+% informações do PDF
+\makeatletter
+\hypersetup{
+ 	%pagebackref=true,
+	pdftitle={\@title},
+	pdfauthor={\@author},
+	pdfsubject={\imprimirpreambulo},
+    pdfcreator={LaTeX with abnTeX2},
+	pdfkeywords={abnt}{latex}{abntex}{abntex2}{trabalho acadêmico},
+	colorlinks=true,  	% false: boxed links; true: colored links
+	linkcolor=blue,     % color of internal links
+	citecolor=blue,     % color of links to bibliography
+	filecolor=magenta,  % color of file links
+	urlcolor=blue,
+% 	bookmarksdepth=4
+}
+\makeatother
+% --------------------------------------
+
+% --------------------------------------
+% Espaçamentos entre linhas e parágrafos
+% --------------------------------------
+
+\raggedbottom
+
+% O tamanho do parágrafo é dado por:
+\setlength{\parindent}{1.3cm}
+
+% Controle do espaçamento entre um parágrafo e outro:
+\setlength{\parskip}{0.2cm}  % tente também \onelineskip
+
+% ----------------
+% Compila o índice
+% ----------------
+\makeindex
+
+% -------------------
+% Início do documento
+% -------------------
+\begin{document}
+
+% Seleciona o idioma do documento (conforme pacotes do babel)
+%\selectlanguage{english}
+\selectlanguage{brazil}
+
+% Altera o estilo da numeração dos algoritmos para ter tamanho de fonte igual à notas de rodapé, texto negrito e sem ponto no fim
+\algrenewcommand{\alglinenumber}[1]{\footnotesize\textbf{#1}}
+
+% Retira espaço extra obsoleto entre as frases.
+\frenchspacing
+
+% ----------------------------------------------------------
+% ELEMENTOS PRÉ-TEXTUAIS
+% ----------------------------------------------------------
+% \pretextual
+\imprimircapa % Capa *
+\imprimirfolhaderosto % Folha de rosto *
+
+% \input{pretextual/folhadeaprovacao.pdf} 	% Folha de aprovação (Depois da apresentação)
+\input{pretextual/dedication.tex} 		% Dedicatória
+\input{pretextual/acknowledgments} 		% Agradecimentos
+\input{pretextual/epigraph} 			% Epígrafe
+\input{pretextual/resumo} 				% Resumo em português
+\input{pretextual/abstract} 			% Resumo em inglês
+% ---
+\pdfbookmark[0]{\listfigurename}{lof}   % Lista de ilustrações
+\listoffigures*
+\cleardoublepage
+% ---
+\pdfbookmark[0]{\listtablename}{lot}    % Lista de tabelas
+\listoftables*
+\cleardoublepage
+% ---
+% \pdfbookmark[0]{\listalgorithmname}{loa}% Lista de algoritmos
+% \listofalgorithms
+% \cleardoublepage
+% ---
+% \renewcommand{\listtheoremname}{Lista de definições}
+% \pdfbookmark[0]{\listtheoremname}{lod}  % Lista de definições
+% \begin{KeepFromToc}
+% \listoftheorems[ignoreall,show=definition]
+% \end{KeepFromToc}
+% \cleardoublepage
+% ---
+% \renewcommand{\listtheoremname}{Lista de proposições}
+% \pdfbookmark[0]{\listtheoremname}{loat}  % Lista de proposições
+% \begin{KeepFromToc}
+% \listoftheorems[ignoreall,show={proposition}]
+% \end{KeepFromToc}
+% \cleardoublepage
+% ---
+% \renewcommand{\listtheoremname}{Lista de teoremas}
+% \pdfbookmark[0]{\listtheoremname}{loat}  % Lista de teoremas
+% \begin{KeepFromToc}
+% \listoftheorems[ignoreall,show={theorem}]
+% \end{KeepFromToc}
+% \cleardoublepage
+% ---
+
+\input{pretextual/abbreviations}  	    % Lista de abreviaturas e siglas
+\input{pretextual/symbols} 	    	    % Lista de símbolos
+% ---
+\pdfbookmark[0]{\contentsname}{toc}     % Sumário
+\tableofcontents*
+\cleardoublepage
+% ---
+
+% ----------------------------------------------------------
+% ELEMENTOS TEXTUAIS
+% ----------------------------------------------------------
+\textual
+
+% ---------
+% Capítulos
+% ---------
+\include{chapters/introduction}
+\include{chapters/genetic-programming}
+\include{chapters/kernel-methods}
+% \include{chapters/gkr-methodology}
+\include{chapters/simulations}
+\include{chapters/conclusions}
+
+% ----------------------------------------------------------
+% Finaliza a parte no bookmark do PDF para que se inicie o
+% bookmark na raiz e adiciona espaço de parte no Sumário
+% ----------------------------------------------------------
+\phantompart
+
+% ----------------------------------------------------------
+% ELEMENTOS PÓS-TEXTUAIS
+% ----------------------------------------------------------
+\postextual
+% ----------------------------------------------------------
+
+% ----------------------------------------------------------
+% Referências bibliográficas
+% ----------------------------------------------------------
+\bibliography{references}
+
+% ----------------------------------------------------------
+% Glossário
+% ----------------------------------------------------------
+%
+% Consulte o manual da classe abntex2 para orientações sobre o glossário.
+%
+%\glossary
+
+% ----------------------------------------------------------
+% Apêndices
+% ----------------------------------------------------------
+
+% ---
+% Inicia os apêndices
+% ---
+%\begin{apendicesenv}
+
+% Imprime uma página indicando o início dos apêndices
+%\partapendices
+% Insere os apêndices
+%\include{apendices/apendice-a}
+%\include{apendices/apendice-b}
+%\include{apendices/apendice-c}
+%\include{apendices/apendice-d}
+%\end{apendicesenv}
+% ---
+
+
+% ----------------------------------------------------------
+% Anexos
+% ----------------------------------------------------------
+
+% ---
+% Inicia os anexos
+% ---
+%\begin{anexosenv}
+
+% Imprime uma página indicando o início dos anexos
+%\partanexos
+% Insere os anexos
+%\include{anexos/anexo-a}
+%\include{anexos/anexo-b}
+%\include{anexos/anexo-c}
+%\include{anexos/anexo-d}
+
+%\end{anexosenv}
+
+%---------------------------------------------------------------------
+% ÍNDICE REMISSIVO
+%---------------------------------------------------------------------
+%\phantompart
+%\printindex
+%---------------------------------------------------------------------
+
+\end{document}

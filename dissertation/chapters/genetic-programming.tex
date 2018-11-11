@@ -1,0 +1,445 @@
+\chapter{Programação Genética} \label{chapter:genetic-programming}
+O desejo pela existência de máquinas que possam solucionar problemas de forma automática (ou seja, sem a interferência de um ser humano) é tema central e um dos principais objetivos da área de AM. \citeonline{samuel1983}, um dos pioneiros da área, afirmou que o objetivo do aprendizado de máquinas ``é fazer com que máquinas tenham comportamento, que se feito por humanos, seria assumido haver o uso de inteligência''.
+
+Programação Genética (PG) é uma técnica de Computação Evolucionária (CE) que evolui programas de computador a fim de resolver problemas de forma automática sem que seja necessário conhecer, \textit{a priori}, a estrutura ou detalhes do problema. Em um nível maior de abstração, PG é um método sistemático, independente de domínio, utilizado para fazer computadores solucionarem problemas automaticamente partindo de uma declaração de alto nível do que precisa ser feito \cite{poli2008}.
+
+Assim como outras técnicas evolucionárias\footnote{Estas são também chamadas de algoritmos evolucionários (\textit{evolutionary algorithms}, EA).}, PG segue o princípio \textit{darwiniano} -- comumente chamado de ``sobrevivência do mais apto''. De acordo com esse princípio, os indivíduos que se adaptarem melhor ao ambiente em que vivem, têm mais chances de sobreviver e perpetuar suas características para gerações futuras de sua espécie.
+
+Por ser baseado nas leis da evolução natural, PG pode ser descrita como um processo estocástico, não podendo garantir que uma solução para um problema seja encontrado \cite{poli2008}. Entretanto, sua natureza aleatória a permite percorrer um espaço de busca maior e escapar de armadilhas em que métodos determinísticos são capturados. Tais características tem sido um ponto favorável à PG, que apresentou sucesso em diversos domínios de aplicações e tem sido capaz de criar programas melhores que aqueles escritos por programadores humanos \cite{banzhaf1998}.
+
+Este capítulo discute os principais conceitos e componentes de um sistema baseado em programação genética. Primeiramente, na seção \ref{sec:overview} é dada uma visão geral acerca do algoritmo padrão da PG. A seção \ref{sec:representation} apresenta a estrutura de um indivíduo e os componentes que a formam. Métodos para criação da população inicial são discutidos na seção \ref{sec:initial-population}. A função de aptidão, que define o quão bom é um indivíduo ao solucionar o problema, é discutida na seção \ref{sec:fitness-functions}. Métodos de seleção são apresentados e analisados na seção \ref{sec:selection-methods}. A seção \ref{sec:genetic-operators} apresenta os operadores genéticos de reprodução, cruzamento e mutação. Os critérios de parada do algoritmo da PG são discutidos na seção \ref{sec:termination}. A seção \ref{sec:stgp} apresenta a versão fortemente tipada da PG. Por fim, a seção \ref{sec:bloat-growth} analisa brevemente potenciais problemas que um sistema baseado em PG pode enfrentar.
+
+\section{Visão geral} \label{sec:overview}
+Um sistema baseado em PG é responsável por evoluir uma população de indivíduos, geração a geração, em busca do indivíduo mais apto a resolver um determinado problema. Os passos básicos de um sistema baseado em PG são descritos no algoritmo \ref{alg:pg}. No início de cada geração, todos os indivíduos da população são avaliados de acordo com um critério de qualidade preestabelecido, e um valor de aptidão (do inglês, \textit{fitness}) é atribuído a cada um deles. Em seguida, um processo de seleção é realizado para escolha dos mais aptos a criarem os indivíduos da próxima população. A criação da nova população se dá através de duas operações: cruzamento e/ou mutação. O operador de cruzamento combina partes aleatórias de dois indivíduos a fim de gerar um filho. O objetivo desse operador é melhorar futuras gerações através da recombinação de bons indivíduos. Já o operador de mutação cria um novo filho alterando aleatoriamente uma parte aleatória de um dos indivíduos selecionados. Esse operador adiciona mais diversidade à população com objetivo de evitar uma convergência prematura ou a parada em mínimos locais do espaço de busca. A Figura \ref{fig:pg-workflow} apresenta uma visão de fluxograma do algoritmo descrito acima.
+
+% Define block styles
+\tikzstyle{decision} = [diamond, draw, fill=blue!20,
+    text width=8em, aspect=2, text centered, node distance=3cm, inner sep=0pt]
+\tikzstyle{block} = [rectangle, draw, fill=blue!20,
+    text width=8em, text centered, rounded corners, minimum height=3em]
+\tikzstyle{line} = [draw, -latex']
+
+\begin{figure}[H]
+    \caption{Fluxograma do algoritmo padrão de PG.}
+    \label{fig:pg-workflow}
+    \begin{tikzpicture}[node distance = 4cm, auto]
+        % Place nodes
+        \node [draw=none] (start) {};
+        \node [block, node distance = 2.5cm, right of=start] (init) {\scriptsize criar população inicial};
+        \node [block, node distance = 4cm, right of=init] (qualitycheck) {\scriptsize avaliação da aptidão};
+        \node [decision, right of=qualitycheck, node distance=4.5cm] (decide) {\scriptsize Algum critério de parada atendido?};
+        \node [block, text width=3em, right of=decide, node distance=4cm] (stop) {\scriptsize parar};
+        \node [block, below of=decide, node distance=3.5cm] (selection) {\scriptsize seleção dos indivíduos};
+        \node [block, left of=selection, node distance=4.5cm] (breeding) {\scriptsize Reprodução \\(cruzamento, mutação)};
+
+        % Draw edges
+        \draw[red, very thick, dotted, rounded corners] ($(breeding.north west)+(-0.8,0.8)$) rectangle ($(selection.south east)+(0.8,-0.8)$) node[text=black] at ($(breeding.south east)+(0.5,-0.5)$, 0) {\scriptsize Processo de reprodução};
+        \path [line] (start) -- (init);
+        \path [line] (init) -- (qualitycheck);
+        \path [line] (qualitycheck) -- (decide);
+        \path [line] (decide) -- node {\scriptsize sim} (stop);
+        \path [line] (decide) -- node[pos=.3] {\scriptsize não} (selection);
+        \path [line] (selection) -- (breeding);
+        \path [line] (breeding) -- node[pos=.5] {\scriptsize Nova população} (qualitycheck);
+    \end{tikzpicture}
+    \begin{center}
+        \makebox[\width]{Fonte: Autor.}
+    \end{center}
+\end{figure}
+
+\begin{algorithm}
+    \caption{Algoritmo padrão da PG}
+    \label{alg:pg}
+    \begin{algorithmic}[1]
+        \Begin
+        \State Crie uma população inicial de forma aleatória utilizando os conjuntos primitivos.
+        \Repeat
+        \State Execute cada programa e defina sua aptidão.
+        \State Selecione um, ou dois, programa(s) da população.
+        \State Crie novo(s) programa(s) através das operações genéticas.
+        \Until uma solução aceitável seja encontrada ou algum critério de parada seja atendido.
+        \State \Return o melhor programa encontrado.
+    \End
+    \end{algorithmic}
+\end{algorithm}
+
+\section{Representação} \label{sec:representation}
+O primeiro estágio na concepção de uma técnica evolucionária é decidir qual a representação genética de um indivíduo \cite{eiben2015}. Esse estágio é um dos mais importantes pois influencia diretamente no projeto de operadores genéticos. Ao propor o algoritmo de PG, \citeonline{koza1992} utilizou estruturas em árvores -- também conhecidas como árvores sintáticas -- para a representação de um indivíduo. Várias outras representações foram propostas ao longo dos anos seguintes. Apesar disso, as árvores permaneceram como a representação mais utilizada em PG \cite{poli2008}.
+
+De modo geral, árvores são uma das estruturas mais utilizadas na representação de objetos na ciência da computação. Em PG, as árvores são responsáveis por capturar expressões através do uso de uma sintaxe formal. Dependendo do problema a ser solucionado, e da percepção do projetista de como a solução deve ser, uma árvore pode representar expressões aritméticas, fórmulas em lógica de predicado de primeira ordem, ou códigos escritos em uma linguagem de programação. Para fins de exemplificação, a Figura \ref{fig:tree-example} ilustra a árvore sintática correspondente à expressão aritmética $\sin(3x) \times 3\cos(x)$.
+
+\begin{figure}[H]
+    \caption{Árvore sintática representando a expressão aritmética $\sin(3x) \times 3\cos(x)$.}
+    \label{fig:tree-example}
+    \begin{center}
+        \begin{tikzpicture}[->,>=stealth',auto,
+        black/.style={fill=my_black},
+        red/.style={fill=my_red, inner sep=5pt},
+        default/.style={draw, circle, text=white},
+        level 1/.style={sibling distance=40mm},
+        level 2/.style={sibling distance=20mm}]
+        \node [arn_r, default, black] {$\times$}
+        child{ node [arn_r, default, black] {$\sin$}
+            child{ node [arn_r, default, black] {$\times$}
+                child{ node [arn_r, default, red] {$3$} }
+                child{ node [arn_r, default, red] {$x$} }
+            }
+        }
+        child{ node [arn_r, default, black] {$\times$}
+            child{ node [arn_r, default, red] {$3$} }
+            child{ node [arn_r, default, black] {$\cos$}
+                child{ node [arn_r, default, red] {$x$} }
+            }
+        };
+        \end{tikzpicture}
+    \end{center}
+    \begin{center}
+        \makebox[\width]{Fonte: Autor.}
+    \end{center}
+\end{figure}
+
+Dessa forma, definir a forma de um indivíduo resume-se em definir a sintaxe da árvore. No contexto mais amplo da ciência da computação, os elementos que compõem uma árvore são chamados de \textbf{nós}, onde o nó mais ao topo da árvore é chamado de raiz, e os nós em níveis mais profundos são chamados de folhas. No contexto de PG, existem dois tipos de nós: (\textit{i}) terminais, que correspondem aos nós folha; (\textit{ii}) funções, que são os nós internos (incluindo a raiz da árvore). Na Figura \ref{fig:tree-example}, os nós folha são representados pela cor vermelha, enquanto os nós internos são representados pela cor cinza.
+
+O conjunto de terminais é constituído de todas as variáveis, funções com aridade (número de argumentos) 0, e constantes utilizadas para solucionar o problema \cite{poli2008,banzhaf1998}. As constantes podem assumir valores inteiros, cadeias de caracteres, números de ponto flutuante etc.
+
+O conjunto de funções é constituído por todas as funções específicas ao domínio do problema a ser solucionado \cite{poli2008}. Exemplos de tais funções são operadores aritméticos, lógicos, declarações condicionais e de laços. Vale ressaltar que o conjunto de funções pode conter quaisquer funções que sejam úteis no domínio do problema. Abaixo, uma lista de funções frequentemente utilizadas é apresentada, extraída de \cite{poli2008,banzhaf1998}:
+
+\begin{itemize}
+    \item Operadores aritméticos: \{ $+, -, \times, /$ \};
+    \item Operadores matemáticos: \{ $\sin, \cos, \tan, \exp, square$ \};
+    \item Operadores lógicos: \{ AND, OR, NOT \};
+    \item Operadores condicionais: \{ If-Then-Else \}.
+\end{itemize}
+
+% \begin{itemize}
+%     \item \textbf{Adaptabilidade}: contrariamente à estrutura de um indivíduo em algoritmos genéticos, que possui tamanho fixo, uma população em PG pode possuir indivíduos de diferentes formas, tamanhos e complexidade. Os termos ``tamanho'' e ``forma'' referem-se à profundidade máxima da árvore e o fator de ramificação dos nós, respectivamente.
+%     \item \textbf{Gramática específica de domínio}: uma gramática deve ser definida de forma a representar de forma precisa o problema em questão A gramática deve, ainda, ser capaz de representar qualquer solução possível.
+% \end{itemize}
+
+\citeonline{koza1992} ainda define duas restrições que devem ser satisfeitas pelos conjuntos de terminais e funções (chamados de conjunto primitivos) para que o algoritmo de PG funcione apropriadamente:
+
+\begin{enumerate}
+    \item \textbf{Fechamento}: qualquer função do conjunto de funções deve ser capaz de operar com todos os valores recebidos como entrada. Dessa forma, é garantido que sejam geradas árvores sintaticamente viáveis.
+    \item \textbf{Suficiência}: garante a convergência do sistema, fazendo com que os conjuntos de funções e terminais sejam capazes de representar uma solução viável para o problema a ser solucionado.
+\end{enumerate}
+
+Embora destaquem-se como a estrutura mais utilizada na representação de indivíduos em PG, o uso de árvores sintáticas possui uma implicação importante a ser mencionada: contrariamente à estrutura de um indivíduo em algoritmos genéticos (AG), que possui tamanho fixo, uma população em PG pode possuir indivíduos de diferentes formas, tamanhos e complexidade\footnote{Os termos ``tamanho'' e ``forma'' referem-se ao número de nós da árvore e o fator de ramificação dos nós, respectivamente.}. Dessa forma, são necessários métodos de criação de indivíduos que considerem essa flexibilidade. A seção \ref{sec:initial-population} apresenta os principais métodos de criação de indivíduos em PG.
+
+\section{População inicial} \label{sec:initial-population}
+O passo seguinte à escolha de uma estrutura adequada para a representação de um indivíduo é criar a população inicial, comumente chamada de geração zero. Como em qualquer outra técnica evolucionária, os indivíduos da população inicial são tipicamente criados de modo aleatório \cite{poli2008,banzhaf1998}. Existem várias abordagens para a criação de indivíduos. A seguir são apresentados os três métodos mais utilizados para criação da população inicial, a saber: \textit{full}, \textit{grow} e \textit{ramped half-and-half}. Métodos adicionais para criação da população inicial (com indivíduos em forma de árvores) são examinados e descritos por \citeonline{luke2001}.
+
+Três pontos devem ser mencionados antes da apresentação dos métodos. O primeiro é a definição do termo profundidade. A profundidade de um nó é a distância a partir do nó raiz para este determinado nó. O nó raiz possui profundidade 1, enquanto a profundidade máxima de uma árvore é a distância do nó raiz ao nó mais baixo. Vale salientar que, para que a população inicial seja criada, um limite de profundidade deve ser estabelecido. O segundo ponto incide sobre a existência de duplicatas na criação da população inicial. Embora possam existir indivíduos duplicados criados a partir dos operadores genéticos, duplicatas não devem ser geradas na criação da população inicial. A justificativa reside na representação do espaço de busca do algoritmo. Caso sejam criadas no momento inicial, duplicatas reduzem o espaço de busca e aumentam as chances de convergência para mínimos locais, uma vez que diminuem a diversidade genética da população \cite{koza1992}. %Inclusive, \citeonline{koza1992} costuma se referir a duplicatas como ``madeiras mortas improdutivas''.
+Por fim, a criação da população inicial não precisa ser necessariamente aleatória. Se houver conhecimento sobre prováveis propriedades de uma solução desejada, os indivíduos com tais propriedades podem ser utilizados como ``semente'' para a população inicial. \citeonline{poli2008} discutem as particularidades dessa abordagem.
+
+\subsection{\textit{Full}}
+Cada indivíduo criado pelo método \textit{full} possui o tamanho máximo definido. Isso significa que a distância da raiz para cada nó folha é igual à profundidade máxima da árvore \cite{koza1992}. Quando uma árvore é criada pelo método \textit{full}, e considerando que a profundidade máxima não tenha sido atingida, um elemento do conjunto de funções será sempre escolhido. As folhas são compostas exclusivamente por terminais.
+
+Vale salientar que, embora a profundidade seja a mesma para todos os nós folha de uma árvore, não significa que todas as árvores terão o mesmo número de nós \cite{poli2008}. A justificativa para isso reside na possível existência de funções com aridades distintas. Uma vez que os elementos que irão compor a árvore são escolhidos aleatoriamente, não é garantido que as árvores tenham o mesmo número de nós.
+
+Uma implicação direta do uso do método \textit{full} é a falta de diversidade da população, dado que todas as árvores possuem estrutura semelhante. A falta de diversidade é um dos principais causadores da redução do espaço de busca das soluções, causando uma queda no desempenho do algoritmo de PG.
+
+\subsection{\textit{Grow}}
+O método \textit{grow} cria árvores de diferentes tamanhos e formas \cite{koza1992}. Quando árvores são criadas utilizando este método, em cada nível um elemento pode ser escolhido aleatoriamente tanto do conjunto de terminais quanto de funções. Porém, quando atinge a profundidade máxima, somente elementos do conjunto de terminais podem ser escolhidos.
+
+Este método se beneficia do fato de que árvores criadas de diferentes tamanhos resultam em uma maior diversidade da população, contrariamente ao método \textit{full}. Apesar de aumentar a diversidade da população, a aleatoriedade também afeta a criação das árvores de forma negativa. Segundo \citeonline{poli2008}, não há um controle das distribuições estatísticas de diversas propriedades importantes, como tamanho e forma das árvores. Caso haja um número de funções muito maior que o de terminais, o método \textit{grow} opera do mesmo modo que o método \textit{full}. Similarmente, se o número de terminais for muito maior que o de funções, as árvores criadas serão muito pequenas no tocante à profundidade máxima.
+
+O fato importante a destacar é que pequenas mudanças, como o número de funções e/ou terminais influencia diretamente no desempenho do algoritmo de PG, podendo torná-lo enviesado ao alterar seu espaço de busca de forma, às vezes, despretensiosa.
+
+\subsection{\textit{Ramped Half-and-Half}}
+O método \textit{ramped half-and-half} cria metade da população inicial utilizando o método \textit{full} e o restante utilizando o método \textit{grow} \cite{poli2008}. Seja $s$ o tamanho da população e $d$ a profundidade máxima. Assim, em cada nível, um total de $\frac{s}{d-1}$ indivíduos serão criados. Destes, metade devem ser criados usando o método \textit{grow}, e a outra metade usando o método \textit{full}. Este método de criação da população inicial tem mostrado sucesso, tornando-se um dos métodos mais utilizados pois consegue unir as vantagens dos métodos \textit{full} e \textit{grow}: criar árvores de diferentes tamanhos e formas mantendo a diversidade da população \cite{koza1992}.
+
+\section{Função de aptidão} \label{sec:fitness-functions}
+Algoritmos evolucionários podem ser vistos como métodos de otimização, que por sua vez, tem como objetivo encontrar a solução ideal (ou ótima) de um determinado problema. Para encontrar a solução ótima de um problema, é necessário definir uma métrica -- ou conjunto de métricas -- que consiga diferenciar os possíveis elementos em termos do quão bem estes solucionam, de forma exata ou aproximada, o problema.
+
+A definição dos conjuntos primitivos é responsável por definir indiretamente o espaço de busca\footnote{Conjunto de todos os programas de computador que podem ser construídos combinando os elementos dos conjuntos primitivos de todas as formas possíveis. \cite{poli2008}} do algoritmo de PG \cite{poli2008}. Entretanto, neste estágio, ainda não é possível definir quais elementos deste espaço de busca são candidatos a solucionar o problema. Dessa forma, é necessário que exista uma medida de quão perto/longe um indivíduo está da solução ótima do problema.
+
+Uma função de aptidão fornece uma medida que pode ser usada pelo algoritmo de PG, durante o processo evolutivo, para descobrir o quão bem um indivíduo aprendeu a predizer as variáveis de saída a partir das variáveis de entrada \cite{banzhaf1998}. As funções de aptidão são utilizadas para obter um valor numérico para cada indivíduo de cada população durante o processo de evolução; portanto, sendo utilizada para que os indivíduos de uma população sejam comparados entre si. Segundo \citeonline{koza1992}, a aptidão de um indivíduo define a probabilidade de que este sobreviva para a fase de reprodução.
+
+O cômputo do valor de aptidão de um indivíduo é tomado com base no resultado de sua execução sobre um conjunto de pares (\textit{entrada}, \textit{saída}), chamados de casos de aptidão (do inglês, \textit{fitness cases}). Em aprendizado de máquina, esses casos de aptidão são equivalentes aos padrões utilizados no treinamento de um modelo. \citeonline{banzhaf1998} afirma que ``um sistema de aprendizado de máquina utiliza o conjunto de treinamento (casos de aptidão) e tenta aprender a partir dos exemplos nele contidos''. %Logo, a PG deve evoluir um programa que seja capaz de mapear as variáveis de entrada para as variáveis de saída destes pares (\textit{entrada}, \textit{saída}) já conhecidos.
+
+Os casos de avaliação devem representar uma parte suficiente do domínio do problema, uma vez que a PG evolui as soluções de modo que encontre os mapeamentos de forma exata (ou aproximada). Dessa forma, se o domínio do problema possui infinitos casos de avaliação, uma quantidade suficiente destes deve ser incluída, assim como os casos de interesse particular para o problema.
+
+A função precisa ser corretamente definida de tal forma que os indivíduos que representem áreas ``fracas'' no espaço de busca não sejam confundidas com áreas ``fortes'', e vice-versa. Existem diversas formas de definir uma função de aptidão. As mais comuns, utilizadas por \citeonline{koza1992}, são:
+
+\begin{itemize}
+    \item \textbf{Bruta} (\textit{Raw}): denota o valor de aptidão de um indivíduo no tocante ao domínio do problema. Por exemplo, no problema artificial das formigas (\textit{ant problem}), o valor de aptidão é o número de partes dos alimentos que são comidos pelas formigas. Quanto mais alimento, melhor. O valor de aptidão bruta nesse caso varia de 0 (i.e., o mínimo de alimento) à 89.
+    \item \textbf{Padronizada} (\textit{Standardized}): redefine a função de aptidão bruta para que o menor valor possível seja usado para representar os melhores indivíduos. Este pode ser o caso de problemas de regressão, onde deseja-se tipicamente minimizar o erro dos modelos de predição. Nesse caso, valores menores de aptidão (i.e., 0), representam os indivíduos mais aptos.
+    \item \textbf{Ajustada} (\textit{Adjusted}): Adicionalmente, pode ser calculado um valor de aptidão ajustado. A medida de aptidão ajustada $a(i,t)$ é computada a partir da aptidão padronizada da seguinte forma:
+        \[ a(i,t) = \frac{1}{1 + s(i,t)}, \]
+    onde $s(i,t)$ é o valor de aptidão padronizado para o indivíduo $i$ no tempo $t$. A aptidão ajustada tem imagem no intervalo $[0, 1]$, onde 1 representa o valor de aptidão do melhor indivíduo para solucionar o problema. Uma vantagem é que este método permite separar indivíduos bons dos ótimos, potencializando o poder de direcionamento em busca do ótimo global.
+    \item \textbf{Normalizada} (\textit{Normalized}): é uma função de aptidão muito utilizada em conjunto com o método de seleção \textit{fitness-proportionate} (seção \ref{sec:selection-methods}). É definido como:
+        \[ n(i,t) = \frac{a(i,t)}{\sum_{k=1}^{M}{a(k,t)}}, \]
+    onde $s(i,t)$ é o valor de aptidão padronizado para o indivíduo $i$ no tempo $t$. Assim como a aptidão ajusta, a aptidão normalizada possui imagem no intervalo $[0, 1]$, onde 1 representa o valor de aptidão do melhor indivíduo para solucionar o problema. A soma das aptidões de todos os indivíduos de uma população é 1.
+\end{itemize}
+
+Funções de aptidão podem ter um único objetivo ou múltiplos objetivos. Funções de aptidão multiobjetivo são constituídas de dois ou mais objetivos diferentes. Um algoritmo de PG que implementa esta abordagem é chamado de \textit{Multi-Objective Genetic Programmming} (MOGP). Um algoritmo MOGP lida com a busca de soluções ótimas simultâneas para que realize o maior número de objetivos possível \cite{poli2008}.
+
+\section{Métodos de seleção} \label{sec:selection-methods}
+Os métodos de seleção permitem que o algoritmo de PG escolha os indivíduos -- conhecidos como pais -- que serão usados para gerar os indivíduos da próxima geração. Existem diversos métodos de seleção; entretanto, esta seção examina dois dos mais comuns: \textit{fitness-proportionate} e seleção por torneio (do inglês, \textit{tournament selection}).
+
+Na seleção por torneio, um número predefinido de indivíduos é escolhido aleatoriamente da população, e o melhor destes é escolhido como pai. Este método é inteiramente dependente do número de elementos predefinido, tipicamente chamado de tamanho do torneio. Para realizar uma operação de cruzamento, duas rodadas de seleção são necessárias. Uma propriedade chave dos métodos de seleção é o chamado peso de seleção (do inglês, \textit{selection pressure}): um sistema de PG com forte peso de seleção favorece os indivíduos mais aptos, enquanto um sistema com fraco peso de seleção não é tão discriminante \cite{poli2008}. Para cada torneio, o peso de seleção na população é mantido constante, pois este método de seleção redimensiona os valores de aptidão toda vez que é realizado.
+
+% A disadvantage of fitness proportionate selection is that an individual with a high normalised fitness will appear several times in the mating pool, and consequently there is a greater probability that it will be selected several times. Furthermore, individuals with a low normalised fitness will never be selected. By selecting the same individual to be the parent, this will result in a loss of diversity due to the fact that the same parents will be used repeatedly. This could further lead to premature convergence.
+
+\textit{Fitnesse-proportionate selection} é computacionalmente mais custoso que o método anterior pois requer que sejam realizados cálculos adicionais sobre cada indivíduo na população. Primeiramente, a aptidão ajustada é calculada; uma vez obtida, uma normalização é realizada. A justificativa disso é para que os valores de aptidão fiquem no intervalo $[0, 1]$ e quando somados, resultem em 1. Em seguida, a aptidão normalizada é multiplicada pelo número de indivíduos na população para determinar o número de ocorrências de cada indivíduo no processo de reprodução. Então, um indivíduo é aleatoriamente selecionado para o processo de reprodução e designado como um dos pais da próxima geração
+
+% A large tournament size leads to an elitist GP algorithm which could converge prematurely to a local optimum. Tournament selection is a commonly used selection method. In comparison to the fitness proportionate method, tournament selection benefits from the fact that a selection pressure can be used. If the tournament size is selected correctly, then tournament selection will maintain diversity and additionally drive the GP algorithm towards a solution. Additionally, tournament selection does not require the extra computations involved in calculating the adjusted fitness and the normalised fitness.
+
+\section{Operadores genéticos} \label{sec:genetic-operators}
+Operadores genéticos representam as operações de busca que são usadas pelo algoritmo de PG. \citeonline{koza1992} menciona que se dois programas são capazes de solucionar um certo problema em um certo nível, então existem partes úteis nestes programas que contribuíram para seus desempenhos. Dessa forma, ele conclui que ao recombinar partes aleatórias de pais, o programa resultante pode ser até melhor em solucionar o problema.
+
+Operadores genéticos são usados para combinar, alterar ou duplicar o material genético dos pais para obter filhos. Tipicamente, a população inicial conterá indivíduos que não são capazes de resolver o problema em mãos. Ao aplicar os operadores nestes indivíduos, espera-se que a população seja direcionada à solução. Portanto, os operadores são utilizados para transformar a população \cite{banzhaf1998}. Quando comparados aos pais, os filhos possuem formato e tamanho diferentes. A escolha dos pais é realizada pelos métodos de seleção, descritos na seção \ref{sec:selection-methods}.
+
+Cada operador genético pode ser categorizado como local ou global. Um operador global é aquele que permite um algoritmo evolucionário explorar diferente áreas do espaço de busca. Contrariamente, um operador local é aquele que explora a examinação de áreas ao redor em que a busca está localizada atualmente. PG faz uso dos operadores genéticos para percorrer o espaço de busca através da exploração. A taxa de aplicação dos operadores afeta diretamente o processo evolucionário. Se uma grande quantidade de operações globais são realizadas, o algoritmo pode ficar saltando para pontos aleatórios do espaço e nunca obter a oportunidade de convergir a um ótimo global. Por outro lado, se uma grande quantidade de operações locais são realizadas, o algoritmo pode ficar preso em mínimos locais e não ter oportunidade de explorar outras áreas do espaço de busca
+
+Os três operadores genéticos mais comuns são: reprodução, cruzamento e mutação.
+
+\subsection{Reprodução}
+O operador de reprodução copia um pai para a próxima geração simplesmente por meio de duplicação, sem que haja alterações em seu material genético \cite{poli2008,banzhaf1998,koza1992}. Uma vez que não produz mudanças no pai a ser copiado, o operador de reprodução é conhecido como operador local.
+
+\subsection{Cruzamento}
+O operador de cruzamento (do inglês, \textit{crossover}) cria dois novos filhos que são formados por pedaços extraídos de dois pais \cite{poli2008,banzhaf1998,koza1992}. O operador escolhe dois pais a partir de um método de seleção. Então um ponto de cruzamento é definido aleatoriamente em ambas as árvores, digamos $p_1$e $p_2$, das árvores $t_1$ e $t_2$, respectivamente. O cruzamento ocorre da seguinte forma: a subárvore localizada em $p_1$ é removida de $t_1$ e inserida na posição $p_2$ em $t_2$. A mesma lógica é utilizada para o ponto $p_2$: a subárvore localizada em $p_2$ é removida de $t_2$ e inserida na posição $p_1$ em $t_1$. A Figura \ref{fig:subtree-crossover} ilustra esse procedimento.
+
+\begin{figure}[H]
+    \caption{Exemplo de cruzamento entre subárvores: \subref{fig:subtree-crossover-1} e \subref{fig:subtree-crossover-2} mostram os indivíduos escolhidos para o processo de cruzamento, enquanto \subref{fig:subtree-crossover-3} e \subref{fig:subtree-crossover-4} mostram os indivíduos gerados pelo cruzamento.}
+    \label{fig:subtree-crossover}
+    \centering
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \begin{tikzpicture}[->,>=stealth',auto, remember picture,
+        	black/.style={fill=my_black},
+        	red/.style={fill=my_red, inner sep=5pt},
+        	default/.style={draw, circle, text=white},
+		    level 1/.style={sibling distance=40mm},
+		    level 2/.style={sibling distance=20mm}]
+		    \node [arn_r, default, black] {$\times$}
+		    child{ node [arn_r, default, black] {$\sin$}
+		        child{ node [arn_r, default, red] {$x$} }
+		    }
+		    child{ node [arn_r, default, black] (1AL) {$\cos$}
+		        child{ node [arn_r, default, red] (2) {$x$} }
+		    };
+		    \node [draw=none, above right of=1AL, node distance=2cm, text width=4em] (xover-point) {\small
+		    Ponto de \textit{crossover}};
+		    \draw[draw] (xover-point) -- (1AL);
+		    \draw[red, very thick, dotted, rounded corners, fill=none] ($(1AL.north west)+(-0.3,0.3)$) rectangle ($(2.south east)+(0.3,-0.3)$);
+		\end{tikzpicture}
+        \caption{Pai 1.}
+        \label{fig:subtree-crossover-1}
+    \end{subfigure}
+    \hfill%
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+    	\begin{tikzpicture}[->,>=stealth',auto, remember picture,
+	        black/.style={fill=my_black},
+	        red/.style={fill=my_red, inner sep=5pt},
+	        default/.style={draw, circle, text=white},
+	        level 1/.style={sibling distance=40mm},
+	        level 2/.style={sibling distance=20mm}]
+	        \node [arn_r, default, black] {$\times$}
+	        child{ node [arn_r, default, black] {$/$}
+	            child{ node [arn_r, default, red] {$\pi$} }
+	            child{ node [arn_r, default, red] {$2$} }
+	        }
+	        child{ node [arn_r, default, red] (1AR) {$3$} };
+		    \node [draw=none, below of=1AR, node distance=2cm, text width=4em] (xover-point) {\small
+		    Ponto de \textit{crossover}}; \draw[draw] (xover-point) -- (1AR);
+		    \draw[red, very thick, dotted, rounded corners, fill=none] ($(1AR.north west)+(-0.3,0.3)$) rectangle ($(1AR.south east)+(0.3,-0.3)$) node (BB) {};
+        \end{tikzpicture}
+        \caption{Pai 2.}
+        \label{fig:subtree-crossover-2}
+    \end{subfigure}
+	\vskip\baselineskip
+	\begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \begin{tikzpicture}[->,>=stealth',auto, remember picture,
+        	black/.style={fill=my_black},
+        	red/.style={fill=my_red, inner sep=5pt},
+        	default/.style={draw, circle, text=white},
+		    level 1/.style={sibling distance=40mm},
+		    level 2/.style={sibling distance=20mm}]
+		    \node [arn_r, default, black] {$\times$}
+		    child{ node [arn_r, default, black] {$\sin$}
+		        child{ node [arn_r, default, red] {$x$} }
+		    }
+		    child{ node [arn_r, default, red] (1BL) {$3$} };
+		    \draw[red, very thick, dotted, rounded corners, fill=none] ($(1BL.north west)+(-0.3,0.3)$) rectangle ($(1BL.south east)+(0.3,-0.3)$);
+		\end{tikzpicture}
+        \caption{Filho 1.}
+        \label{fig:subtree-crossover-3}
+	\end{subfigure}
+	\quad
+	\begin{subfigure}[b]{0.475\textwidth}
+        \centering
+		\begin{tikzpicture}[->,>=stealth',auto,
+	        black/.style={fill=my_black},
+	        red/.style={fill=my_red, inner sep=5pt},
+	        default/.style={draw, circle, text=white},
+	        level 1/.style={sibling distance=40mm},
+	        level 2/.style={sibling distance=20mm}]
+	        \node [arn_r, default, black] {$\times$}
+	        child{ node [arn_r, default, black] {$/$}
+	            child{ node [arn_r, default, red] {$\pi$} }
+	            child{ node [arn_r, default, red] {$2$} }
+	        }
+            child{ node [arn_r, default, black] (1) {$\cos$}
+                child{ node [arn_r, default, red] (2) {$x$} }
+            };
+		    \draw[red, very thick, dotted, rounded corners, fill=none] ($(1.north west)+(-0.3,0.3)$) rectangle ($(2.south east)+(0.3,-0.3)$) node (AA) {};
+        \end{tikzpicture}
+        \caption{Filho 2.}
+        \label{fig:subtree-crossover-4}
+	\end{subfigure}
+    \begin{center}
+        \makebox[\width]{Fonte: Autor.}
+    \end{center}
+\end{figure}
+
+\subsection{Mutação}
+O operador de mutação cria um filho ao realizar mudanças em um único pai \cite{poli2008,banzhaf1998,koza1992}. Seu modo de funcionamento gira em torno de um ponto de mutação. Este ponto, $p$, é escolhido aleatoriamente do pai selecionado, e a subárvore com raiz neste ponto é removida. Uma nova árvore gerada de forma aleatória é inserida no ponto $p$. Mutações podem causar um rápido crescimento e, portanto, um mecanismo de poda é empregado para garantir que a árvore não ultrapasse a profundidade máxima definida. A poda é realizada trocando as funções que estão na profundidade máxima por terminais. Diferentemente do operador de reprodução, a mutação é um operador global dado que subárvores aleatórias são criadas nos pontos de mutação, que podem resultar em diferenças significantes entre pais e filhos. Como consequência, este operador não promove convergência. A Figura \ref{fig:subtree-mutation} ilustra esse procedimento.
+
+\begin{figure}[H]
+    \caption{Exemplo de mutação de subárvores: \subref{fig:subtree-mutation-1} mostra o indivíduo escolhido para o processo de mutação, \subref{fig:subtree-mutation-2} apresenta uma nova subárvore gerada aleatoriamente e \subref{fig:subtree-mutation-3} mostra o indivíduo gerado pela mutação.}
+    \label{fig:subtree-mutation}
+    \begin{subfigure}[b]{0.33\textwidth}
+        \centering
+        \begin{tikzpicture}[->,>=stealth',auto, remember picture,
+        	black/.style={fill=my_black},
+        	red/.style={fill=my_red, inner sep=5pt},
+        	default/.style={draw, circle, text=white},
+		    level 1/.style={sibling distance=20mm},
+		    level 2/.style={sibling distance=20mm}]
+		    \node [arn_r, default, black] {$\times$}
+		    child{ node [arn_r, default, black] {$\sin$}
+		        child{ node [arn_r, default, red] {$x$} }
+		    }
+		    child{ node [arn_r, default, black] (1AL) {$\cos$}
+		        child{ node [arn_r, default, red] (2) {$x$} }
+		    };
+		    \node [draw=none, above right of=1AL, node distance=2cm, text width=4em] (xover-point) {\small
+		    Ponto de mutação};
+		    \draw[draw] (xover-point) -- (1AL);
+		    \draw[red, very thick, dotted, rounded corners, fill=none] ($(1AL.north west)+(-0.3,0.3)$) rectangle ($(2.south east)+(0.3,-0.3)$);
+		\end{tikzpicture}
+		\caption{Pai.}
+		\label{fig:subtree-mutation-1}
+    \end{subfigure}
+    %
+    \begin{subfigure}[b]{0.30\textwidth}
+        \centering
+    	\begin{tikzpicture}[->,>=stealth',auto, remember picture,
+        	black/.style={fill=my_black},
+	        red/.style={fill=my_red, inner sep=5pt},
+	        default/.style={draw, circle, text=white},
+		    level 1/.style={sibling distance=20mm}]
+	        \node [arn_r, default, black] {$+$}
+		    child{ node [arn_r, default, red] {$3$} }
+            child{ node (1) [arn_r, default, red] {$x$} };
+	        \node [draw=none, below of=1, node distance=0.5cm] {};
+        \end{tikzpicture}
+		\caption{Subárvore aleatória.}
+		\label{fig:subtree-mutation-2}
+    \end{subfigure}
+    %
+    \begin{subfigure}[b]{0.33\textwidth}
+	    \centering
+        \begin{tikzpicture}[->,>=stealth',auto, remember picture,
+        	black/.style={fill=my_black},
+        	red/.style={fill=my_red, inner sep=5pt},
+        	default/.style={draw, circle, text=white},
+		    level 1/.style={sibling distance=30mm},
+		    level 2/.style={sibling distance=20mm}]
+		    \node [arn_r, default, black] {$\times$}
+		    child{ node [arn_r, default, black] {$\sin$}
+		        child{ node [arn_r, default, red] {$x$} }
+		    }
+		    %child{ node [arn_r, default, red] (1) {$3$} };
+		    child{ node [arn_r, default, black] (1) {$+$}
+		        child{ node [arn_r, default, red] {$3$} }
+                child{ node [arn_r, default, red] (2) {$x$} }
+            };
+		    \draw[red, very thick, dotted, rounded corners, fill=none] ($(1.north west)+(-1.3,0.3)$) rectangle ($(2.south east)+(0.3,-0.3)$);
+		\end{tikzpicture}
+		\caption{Filho.}
+		\label{fig:subtree-mutation-3}
+	\end{subfigure}
+    \begin{center}
+        \makebox[\width]{Fonte: Autor.}
+    \end{center}
+\end{figure}
+
+\section{Critérios de parada} \label{sec:termination}
+\citeonline{koza1992} afirma que PG é ``um paradigma que é paralelo à natureza, tal que é um processo sem fim''. Claramente, é inviável manter um processo de computador executando sem um fim definido. Logo, o algoritmo de PG deve terminar assim que um predicado de sucesso é encontrado. Este predicado de sucesso pode ser definido de diferentes formas. Entretanto, a mais comum é encontrar a solução que contém taxas de acerto de 100\%, i.e., a solução perfeita para o problema. O predicado de sucesso pode ser dependente do problema e, assim, ser definido de forma diferente para cada problema \cite{poli2008}. Contudo, em alguns domínios de problemas a solução perfeita não é o desejado. Dessa forma, quando uma solução próxima do ótimo é encontrada, o algoritmo pode encerrar. Tipicamente, o melhor indivíduo da última geração do processo evolutivo é designado como o resultado da realização do algoritmo, embora possam ser retornados outros indivíduos para análise de suas estruturas e/ou valores de aptidão.
+
+\section{\textit{Strongly-Typed Genetic Programming}} \label{sec:stgp}
+\textit{Strongly-Typed Genetic Programming} (STGP) \cite{montana1995} é uma abordagem aprimorada de PG que impõe restrições sob os nós dentro de sua representação em árvore. Um tipo é alocado para cada terminal e função e, consequentemente, isto garante que as árvores sejam sintaticamente corretas durante o processo da evolução. STGP garante que durante a criação da população inicial e aplicação dos operadores genéticos, os tipos das funções e terminais são respeitados e não violados. Adicionalmente, ela reduz o tamanho do espaço de busca ao limitar as diferentes combinações de funções e terminais \cite{montana1995}.
+
+Como exemplo, a função \textit{if-then-else} é uma que requer o uso de STGP. Esta função é ilustrada na Figura \ref{fig:stgp-example}, onde cada um dos três argumentos podem ter uma restrição de tipo. A função \textit{if-then-else} tem uma condição (\textit{if}) e duas consequências (\textit{then} e \textit{else}) que são realizadas baseadas no resultado da condição. Vamos assumir um tipo \textit{booleano} para o \textit{if}, como ilustrado na Figura \ref{fig:stgp-example}; como resultado da STGP, a condição \textit{if} sempre retornará um tipo \textit{booleano}, e esta imposição não pode ser violada. Logo, as variáveis $x$ e $y$ devem possuir tipo \textit{booleano}.
+
+\begin{figure}[H]
+    \caption{Função \textit{if-then-else}.}
+    \label{fig:stgp-example}
+    \begin{center}
+        \begin{tikzpicture}[->,>=stealth',auto,
+        	black/.style={fill=my_black},
+        	red/.style={fill=my_red, inner sep=5pt},
+        	default/.style={draw, circle, text=white, text centered},
+		    level 1/.style={sibling distance=25mm},
+		    level 2/.style={sibling distance=20mm}]
+            \node [arn_r, default, black, inner sep=5pt] {if}
+            child{ node [arn_r, default, black] {and}
+                child{ node [arn_r, default, red] {$x$} }
+                child{ node [arn_r, default, red] {$y$} }
+            }
+            child{ node [arn_r, default, red] {$a$} }
+            child{ node [arn_r, default, red] {$b$} };
+        \end{tikzpicture}
+    \end{center}
+    \begin{center}
+        \makebox[\width]{Fonte: Autor.}
+    \end{center}
+\end{figure}
+
+Ao aplicar os operadores genéticos, deve ser garantido que as atribuições de tipos não sejam violadas. Por exemplo: assumindo que na Figura \ref{fig:stgp-example}, o terminal $x$ é selecionado como ponto de mutação, deve ser garantido que a nova subárvore criada neste ponto retorne um valor \textit{booleano}. Se o valor de tipo atribuído é violado, a árvore é inválida.
+
+\section{\textit{Bloat growth}} \label{sec:bloat-growth}
+Antes de introduzir o conceito de \textit{bloat}, deve ser introduzido o conceito de íntrons. Íntrons são definidos como códigos redundantes em indivíduos de PG que não afetam seus valores de aptidão \cite{poli2008}. Em outras palavras, eles não afetam a sobrevivência dos indivíduos \cite{banzhaf1998}. Exemplos de íntrons são apresentados na Figura \ref{fig:introns}.
+
+\begin{figure}[H]
+    \centering
+    \caption{Exemplos de íntrons: \subref{fig:introns-and} representa a expressão lógica $1 \wedge 1$ e \subref{fig:introns-or} representa a expressão lógica $0 \vee 0$.}
+    \label{fig:introns}
+    \begin{subfigure}[b]{0.5\linewidth}
+        \centering
+        \begin{tikzpicture}[->,>=stealth',auto,
+        	black/.style={fill=my_black},
+        	red/.style={fill=my_red, inner sep=5pt},
+        	default/.style={draw, circle, text=white, text centered},
+		    level 1/.style={sibling distance=15mm}]
+            \node [arn_r, default, black, inner sep=4pt] {and}
+            child{ node [arn_r, default, red] {$1$} }
+            child{ node [arn_r, default, red] {$1$} };
+        \end{tikzpicture}
+        \caption{}
+        \label{fig:introns-and}
+    \end{subfigure}%%
+    \begin{subfigure}[b]{0.5\linewidth}
+        \centering
+        \begin{tikzpicture}[->,>=stealth',auto,
+        	black/.style={fill=my_black},
+        	red/.style={fill=my_red, inner sep=5pt},
+        	default/.style={draw, circle, text=white, text centered},
+		    level 1/.style={sibling distance=15mm}]
+            \node [arn_r, default, black, inner sep=5pt] {or}
+            child{ node [arn_r, default, red] {$0$} }
+            child{ node [arn_r, default, red] {$0$} };
+        \end{tikzpicture}
+        \caption{}
+        \label{fig:introns-or}
+    \end{subfigure}
+    \begin{center}
+        \makebox[\width]{Fonte: Autor.}
+    \end{center}
+\end{figure}
+
+\textit{Bloat} ocorre quando os indivíduos em uma população de PG crescem descontroladamente até alcançar as profundidades máximas das árvores. \citeonline{banzhaf1998} explica que o crescimento exponencial de íntrons leva ao \textit{bloat}. Caso não haja uma medida de prevenção, o \textit{bloat} com certeza ocorrerá. Dessa forma, pode-se afirmar que íntrons claramente têm efeito sobre o \textit{bloat}. Entretanto, pode ser argumentado que o crescimento exponencial dos íntrons age como uma espécie de proteção global \cite{banzhaf1998}. O operador de cruzamento pode ter um efeito destrutivo caso remova boas partes de um indivíduo. Este efeito pode ser reduzido se o operador de cruzamento remover um íntron de uma árvore ao invés de um bom bloco de construção. À medida que o algoritmo de PG itera, os indivíduos tornam-se mais aptos e, eventualmente, o algoritmo irá encontrar dificuldade em melhorá-los ainda mais. Uma vez que o \textit{bloat} ocorre, o algoritmo de PG irá tentar ao máximo melhorar a aptidão do atual melhor indivíduo encontrado. Logo, pode ser argumentado que íntrons têm um efeito positivo nos indivíduos. No entanto, eles consequentemente podem levar ao \textit{bloat}. \citeonline{luke2001} discutem diversos métodos de controle do \textit{bloat}.

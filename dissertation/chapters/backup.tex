@@ -1,0 +1,135 @@
+% \begin{table}[ht]
+% \caption{RMSE médio de todas as técnicas sobre os conjuntos de dados}
+% \begin{center}
+% \begin{tabular}{lc@{\hskip 9pt}c@{\hskip 9pt}c@{\hskip 9pt}c@{\hskip 9pt}c@{\hskip
+% 9pt}c} \hline\noalign{\smallskip} \label{RMSE}
+% \textbf{Conjunto de dados} & \textbf{PG} & \textbf{Lin} & \textbf{Gau} & \textbf{Poly} &
+% \textbf{MLP} & \textbf{RBF} \\
+% \noalign{\smallskip}
+% \hline
+% \noalign{\smallskip}
+% Air Pollution & 0.1336 & \textbf{0.1258}* & 0.1399 & 0.1820 & 0.1716 & 0.1893 \\
+% Auto MPG & \textbf{0.1755}* & 0.1929 & 0.1860 & 0.2606 & 0.1960 & 1.6916 \\
+% Auto Price & 0.1337 & 0.0932 & 0.1208 & 0.1564 & 0.0979 & \textbf{0.0869}* \\
+% Boston Housing & 0.1180 & 0.1143 & 0.1037 & 0.1193 & 0.1135 & \textbf{0.1023}* \\
+% Breast Cancer & \textbf{0.1838}* & 0.1861 & 0.1892 & 0.4622 & 0.2111 & 0.4246 \\
+% Machine CPU & 0.0661 & 0.0562 & 0.0925 & 0.4643 & 0.0662 & \textbf{0.0488}* \\
+% Servo Motor & 0.2423 & 0.1854 & 0.1417 & \textbf{0.0870}* & 0.1672 & 0.2068 \\
+% Sleep & 0.3861 & 0.2001 & \textbf{0.1874}* & 0.6800 & 0.2455 & 43.9571 \\
+% Stocks Domain & 0.0889 & 0.0841 & \textbf{0.0293}* & 0.0644 & 0.0890 & 0.0354 \\
+% Spiritwt & 0.1471 & 0.0505 & \textbf{0.0193}* & 0.0194 & 0.0672 & 0.0242 \\
+% Yacht Hydrodynamics & 0.1438 & 0.1714 & 0.1508 & \textbf{0.0294}* & 0.1488 & 0.0300 \\
+% \hline
+% \end{tabular}
+% \end{center}
+% \end{table}
+
+% \begin{table}[h]
+% \caption{RMSE médio de todas as técnicas sobre os conjuntos de dados}
+% \begin{center}
+% \begin{tabular}{lc} \hline\noalign{\smallskip} \label{RMSE}
+% \textbf{Conjunto de dados} & \textbf{PG} & \textbf{Lin} & \textbf{Gau} & \textbf{Poly} &
+% \textbf{MLP} & \textbf{RBF} \\
+% \noalign{\smallskip}
+% \hline
+% \noalign{\smallskip}
+
+% % \begin{tabular}{llr}
+% % \firsthline
+% % % \multicolumn{2}{c}{Item} \\
+% % \cline{2-3}
+% % \textbf{Conjunto de Dados}  &   \textbf{Método}    &   Price (\$) \\
+% % \hline
+% % Air Pollution   & GKR       & \\
+% %                 & SVR-LIN   & \\
+% %                 & SVR-GAU   & \\
+% %                 & SVR-POLY  & \\
+% %                 & MLP       & \\
+% %                 & RBF       & \\
+% % \hline
+% % Auto MPG & & \\
+% % \hline
+% % Auto Price & & \\
+% % \hline
+% % Boston Housing & & \\
+% % \hline
+% % Breast Cancer & & \\
+% % \hline
+% % Machine CPU & & \\
+% % \hline
+% % Servo Motor & & \\
+% % \hline
+% % Sleep & & \\
+% % \hline
+% % Stocks Domain & & \\
+% % \hline
+% % Spiritwt & & \\
+% % \hline
+% % Yatch Hydrodynamics & & \\
+% % \lasthline
+% % \end{tabular}
+
+
+
+% % A Table \ref{RMSE} mostra os resultados de performance, enquanto a Tabela \ref{STD} mostra os respectivos desvios padrões. Apenas no conjunto de dados Auto MPG, a PG teve performance superior à SVM testada com kernels clássicos, com RMSE médio de 0.1755. Uma explicação possível é que uma pequena quantidade de funções kernel foi utilizada para criar novas funções, não gerando, assim, um espaço de busca suficiente. Isso também pode ser visto em casos onde a SVM foi superior à PG com kernels polinomiais e gaussianos, o melhor indivíduo gerado pela PG era o kernel linear. Já as redes MLP e RBF chegam a ter performance superior em alguns casos, inclusive em relação à SVM.
+
+% % \begin{table}
+% % \caption{Desvio padrão respectivo à cada RMSE médio da Tabela \ref{RMSE}}
+% % \begin{center}
+% % \begin{tabular}{lc@{\hskip 9pt}c@{\hskip 9pt}c@{\hskip 9pt}c@{\hskip 9pt}} \hline\noalign{\smallskip}
+% % \textbf{Conjunto de dados} & \textbf{Padrões} & \textbf{Treinamento} & \textbf{Teste} & \textbf{Variáveis} \\
+% % \noalign{\smallskip}
+% % \hline
+% % \noalign{\smallskip}
+% % Air Pollution & 0.0289 & 0.0298 & \textbf{0.0225}* & 0.0457 \\
+% % Auto MPG & 0.0365 & 0.0376 & \textbf{0.0282}* & 0.1473 \\
+% % Auto Price & 0.2331 & 0.0236 & 0.0470 & 0.0528 \\
+% % Boston Housing & 0.0112 & 0.0143 & 0.0188 & 0.0274 \\
+% % Breast Cancer & 0.0873 & \textbf{0.0425}* & 0.0458 & 1.0074 \\
+% % Machine CPU & 0.0264 & 0.0295 & 0.0539 & 0.4586 \\
+% % Servo Motor & 0.0417 & 0.0468 & 0.0489 & 0.0362 \\
+% % Sleep & 0.0873 & \textbf{0.0425}* & 0.0458 & 1.0074 \\
+% % Stocks Domain & 0.0038 & 0.0062 & 0.0030 & 0.0219 \\
+% % Spiritwt & 0.0090 & 0.0054 & 0.0027 & \textbf{0.0009}* \\
+% % Yacht Hydrodynamics & 0.0129 & 0.0240 & 0.0297 & 0.0043 \\
+% % \hline
+% % \end{tabular}
+% % \end{center}
+% % \end{table}
+
+% % \begin{table}
+% % \caption{Desvio padrão respectivo à cada RMSE médio da Tabela \ref{RMSE}}
+% % \begin{center}
+% % \begin{tabular}{lc@{\hskip 9pt}c@{\hskip 9pt}c@{\hskip 9pt}c@{\hskip 9pt}c@{\hskip
+% % 9pt}c} \hline\noalign{\smallskip} \label{STD}
+% % \textbf{Conjunto de dados} & \textbf{PG} & \textbf{Lin} & \textbf{Gau} & \textbf{Poly} &
+% % \textbf{MLP} & \textbf{RBF} \\
+% % \noalign{\smallskip}
+% % \hline
+% % \noalign{\smallskip}
+% % Air Pollution & 0.0289 & 0.0298 & \textbf{0.0225}* & 0.0457 & 0.0582 & 0.0494 \\
+% % Auto MPG & 0.0365 & 0.0376 & \textbf{0.0282}* & 0.1473 & 0.0381 & 2.3290 \\
+% % Auto Price & 0.2331 & 0.0236 & 0.0470 & 0.0528 & \textbf{0.0192}* & 0.0275 \\
+% % Boston Housing & 0.0112 & 0.0143 & 0.0188 & 0.0274 & \textbf{0.0108}* & 0.0198 \\
+% % Breast Cancer & 0.0873 & \textbf{0.0425}* & 0.0458 & 1.0074 & 0.1033 & 87.9894 \\
+% % Machine CPU & 0.0264 & 0.0295 & 0.0539 & 0.4586 & 0.0192 & \textbf{0.0187}* \\
+% % Servo Motor & 0.0417 & 0.0468 & 0.0489 & 0.0362 & 0.0227 & \textbf{0.2051}* \\
+% % Sleep & 0.0873 & \textbf{0.0425}* & 0.0458 & 1.0074 & 0.1033 & 87.9894 \\
+% % Stocks Domain & 0.0038 & 0.0062 & 0.0030 & 0.0219 & 0.0049 & \textbf{0.0022}* \\
+% % Spiritwt & 0.0090 & 0.0054 & 0.0027 & \textbf{0.0009}* & 0.0030 & 0.0027 \\
+% % Yacht Hydrodynamics & 0.0129 & 0.0240 & 0.0297 & 0.0043 & 0.0132 & \textbf{0.0063}* \\
+% % \hline
+% \end{tabular}
+% \end{center}
+% \end{table}
+
+A implementação do algoritmo GKR é composta da combinação entre o framework ECJ \cite{luke2015b} e o Matlab. Os conjuntos de dados utilizados nos experimentos (listados no apêndice x) foram dividos 30 vezes aleatoriamente em conjuntos de treinamento e teste. Para cada divisão, a PG era treinada com os parâmtros listados na Tab \ref{Tabela1}. O melhor indivíduo de cada divisão foi então selecionado e teve seu RMSE testado com o conjunto de teste. O resultado final é a média das 30 medidas.
+
+Nós comparamos nosso algoritmo com outras técnicas de aprendizado de máquina, como SVM e redes neurais MLP e RBF. No caso da SVM, foram utilizados os kernels linear, gaussiano e polinomial. Como dito na Seção \ref{chapter:gkr}, é realizado uma validação cruzada em todas as técnicas com as mesmas divisões dos conjuntos de dados. A performance é obtida medindo o RMSE médio de cada uma das técnicas.
+
+% \section{Perceptron Multicamadas (MLP)}
+% \clearpage
+% \section{Funções de Base Radiais (RBF)}
+% \clearpage
+% \section{Regressor de Vetores Suporte (SVR)}
+% \clearpage

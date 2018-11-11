@@ -1,0 +1,201 @@
+\chapter{\textit{Genetic Kernels for Regression} (Proposta)} \label{chapter:gkr}
+
+Encontrar uma função de \textit{kernel} que se adapte a um determinado problema é um estágio crítico no desenvolvimento de métodos de aprendizagem baseados em \textit{kernel}. Isso se deve muito ao fato da necessidade de haver conhecimento \textit{a priori} sobre o problema \cite{shawe2004}. De acordo com \citeonline{scholkopf2001}, a própria escolha do \textit{kernel} representa conhecimento sobre o problema e sua solução. Como já mencionado no Capítulo \ref{chapter:introduction}, uma abordagem bastante utilizada na comunidade acadêmica é utilizar \textit{kernels} já consolidados na literatura, apenas realizando uma busca pelo seu melhor conjunto de parâmetros. A Tabela \ref{tab:commom-kernels} apresenta uma lista das principais funções de \textit{kernels} utilizados e seus respectivos parâmetros.
+
+\begin{table}[H]
+    \caption{Funções de \textit{kernel} mais populares na literatura.}
+    \begin{center} \label{tab:commom-kernels}
+        \begin{tabular}{l@{\hskip 20pt}l}
+            \hline\noalign{\smallskip}
+            \textbf{\textit{Kernel}} & \textbf{Descrição} \\
+            \noalign{\smallskip}
+            \hline
+            \noalign{\smallskip}
+            Linear		& k(${\mathbf x}$,${\mathbf z}$) $= \mathbf{x}^{\top}\mathbf{z}$ \\
+            RBF	        & k(${\mathbf x}$,${\mathbf z}$) $= e^{-\|\mathbf{x} - \mathbf{z}\|^2 / \sigma^2}$, onde $\sigma$ é uma constante. \\
+            Polinomial	& k(${\mathbf x}$,${\mathbf z}$) $= (\mathbf{x}^{\top}\mathbf{z} + 1)^d$, onde $d$ é o grau do polinômio. \\
+            \hline
+        \end{tabular}
+    \end{center}
+    \begin{center}
+        \makebox[\width]{Fonte: \citeonline{ajalmar2011}}.
+    \end{center}
+\end{table}
+
+% Como alternativa, duas outras abordagens são encontradas na literatura. A primeira concentra-se no aprendizado de \textit{kernels} a partir do conjunto de dados. Essa abordagem funciona através da definição de um conjunto de \textit{kernels}
+% (\textit{Multiple Kernel Learning}, MKL)
+
+% \lipsum[3]
+
+Criar \textit{kernels} que adaptem-se a problemas específicos é uma opção mais conveniente, pois o projetista de um modelo baseado em \textit{kernels} não necessita verificar qual \textit{kernel} é melhor para o problema que deve ser solucionado. Entretanto, projetar uma função de \textit{kernel} demanda muito conhecimento acerca do problema, de forma que torna-se muito custoso (em termos de tempo dispendido) realizar esta tarefa manualmente. Uma alternativa é a utilização da construção em blocos. Esse modelo de construção utiliza propriedades de fechamento sobre as funções de \textit{kernel} que permite que novas funções sejam geradas a partir da combinação de outras já conhecidas. A Proposição \ref{prop:1}, adaptada de \cite{shawe2004} lista três operações de fechamento que garantem a construção de novas funções de \textit{kernel} válidas.
+% Uma alternativa, que vem ganhando bastante popularidade em anos recentes, é a criação de funções de \textit{kernel} específicas para determinados tipos de problemas. Uma forma possível de criação de novos \textit{kernels} é a utilização da construção em blocos. Esse modelo de construção utiliza propriedades de fechamento sobre as funções de \textit{kernel} que permite que novas funções sejam geradas a partir da combinação de outras já conhecidas. A Proposição \ref{prop:1}, adaptada de \cite{shawe2004} lista três operações de fechamento que garantem a construção de novas funções de \textit{kernel} válidas.
+
+\begin{proposition}[Propriedades de fechamento]
+    \label{prop:1}
+    Sejam $\kappa_1$ e $\kappa_2$ dois kernels sobre $\mathbf{X} \times \mathbf{X}, \mathbf{X} \subseteq
+    \mathbb{R}^n,$ e $a \in \mathbb{R}^+$. Então as seguintes funções são kernels
+
+    \begin{enumerate}[label=(\roman*)]
+        \item $k(\mathbf{x},\mathbf{z}) = \kappa_1(\mathbf{x},\mathbf{z}) + \kappa_2(\mathbf{x},\mathbf{z})$,
+        \item $k(\mathbf{x},\mathbf{z}) = \kappa_1(\mathbf{x},\mathbf{z}) \times \kappa_2(\mathbf{x},\mathbf{z})$,
+        \item $k(\mathbf{x},\mathbf{z}) = a \cdot \kappa_2(\mathbf{x},\mathbf{z})$.
+        % \item $k(\mathbf{x},\mathbf{z}) = e^{\kappa_1(\mathbf{x},\mathbf{z})}$.
+    \end{enumerate}
+\end{proposition}
+
+A proposta deste trabalho, denominada \textit{Genetic Kernels for Regression} (GKR), baseia-se em PG para encontrar \textit{kernel}(\textit{s}) para quaisquer problemas de regressão a serem solucionados pelo método KRR. Como entrada, o GKR recebe o parâmetro de regularização $\lambda$, e um conjunto de dados de treinamento $\mathcal{D}$. Ao fim de sua realização, o algoritmo retorna o melhor \textit{kernel} encontrado, que será usado na construção do modelo de predição final.
+
+Inicialmente, uma população de soluções é construída de forma aleatória, tal que cada indivíduo representa um \textit{kernel} construído utilizando as propriedades apresentadas na Proposição \ref{prop:1} e os \textit{kernels} apresentados na Tabela \ref{tab:gkr-kernels}. A avaliação dos indivíduos se dá através da raiz da média dos erros quadráticos (\textit{Root Mean Squared Error}, RMSE). As gerações seguintes são criadas a partir da aplicação dos operadores genéticos (seção \ref{sec:genetic-operators}) sobre os melhores indivíduos da atual população, escolhidos com base em seus valores de aptidão. Este processo é repetido até que um dos critérios de parada seja atendido. Ao fim do processo evolutivo, o melhor indivíduo da população final é escolhido para a criação do modelo final. A Figura \ref{fig:gkr-overview} apresenta uma visualização do fluxo de trabalho do GKR.
+
+\begin{figure}[H]
+    \caption{Fluxo de trabalho do algoritmo GKR.}
+    \centering
+    \label{fig:gkr-overview}
+    \begin{tikzpicture}[node distance = 4cm, auto,
+        decision/.style={diamond, draw, fill=my_gray, text width=3em, text=white, aspect=1, text centered, node distance=3cm, inner sep=0pt},
+        block inside/.style={rectangle, draw, fill=none, text width=8em, text centered, rounded corners, minimum height=3em}]
+
+        \node [block] (dataset) {\scriptsize conjunto de dados de treinamento};
+        \node [block, right of=dataset] (lambda) {\scriptsize parâmetro de regularização};
+        \node [block inside, node distance=2.5cm, below of=dataset] (init) {\scriptsize criar população inicial de soluções};
+        \node [block inside, node distance=2.5cm, below of=init] (fitness) {\scriptsize avaliar população de indivíduos};
+        \node [decision, below of=fitness, node distance=2.5cm] (decide) {\scriptsize \textbf{D}};
+        \node [block inside, right of=decide, node distance=5cm] (selection) {\scriptsize selecionar indivíduos};
+        \node [block inside, above of=selection, node distance=2.5cm] (update) {\scriptsize atualizar população};
+        \node [block inside, right of=update, node distance=4.5cm] (breeding) {\scriptsize aplicar operadores genéticos};
+        \node [block inside, below of=decide, node distance=2.5cm] (bestsofar) {\scriptsize melhor indivíduo};
+        \node [block, below of=bestsofar, node distance=2.5cm] (kernel) {\scriptsize função de \textit{kernel}};
+        \node [decision, right of=bestsofar, text width=2em, node distance=9.2cm] (decide2) {\tiny \textbf{D}};
+        \node [draw=none, right of=decide2, node distance=1.3cm, text width=4em, text centered] (end) {\tiny terminar busca?};
+
+        \draw[very thick, dashed, rounded corners] ($(init.north west)+(-0.4,0.4)$) rectangle ($(end.south east)+(0.2,-0.7)$) node[text=black] at ($(breeding.north east)+(-0.2,3.2)$, 0) {\scriptsize \textbf{GKR}};
+        \path [line] (dataset) -- (init);
+        \path [line] (lambda) |- (init);
+        \path [line] (init) -- (fitness);
+        \path [line] (fitness) -- (decide);
+        \path [line] (selection.east) -| (breeding.south);
+        \path [line] (decide) -- node {\tiny não} (selection);
+        \path [line] (decide) -- node {\tiny sim} (bestsofar);
+        \path [line] (breeding) -- (update);
+        \path [line] (update) -- (fitness);
+        \path [line] (bestsofar) -- (kernel);
+    \end{tikzpicture}
+    \makebox[\width]{Fonte: Autor.}
+\end{figure}
+
+% Um potencial problema que pode surgir durante a execução do algortimo da PG, é o que muito autores chamam de \textit{bloat}. Esse fenômeno faz com as árvores geradas cresçam sem que se tenha aumento na peformance. Por essa razão, pretende-se utilizar o método de seleção \textit{lexictour}, que tem preferência por indivíduos de menor tamanho caso haja empate de performance entre vários indivíduos.
+
+% Para determinar o quão apto é um indivíduo, uma validação cruzada será utilizada sobre seu RMSE (\textit{root mean squared error}). Antes do processo de evolução de uma geração iniciar, algumas configurações importantes são feitas. O conjunto de dados é dividido em dois subconjuntos: treinamento e teste. O conjunto de treinamento, então, é dividido em 10 partes (\textit{folds}). O treinamento de cada indivíduo é executado durante 10 iterações, sempre deixando um \textit{fold} como um conjunto de validação independente. A aptidão de um indivíduo é dada pela média das 10 validações.
+
+% Nosso método terá sua performance comparada com uma SVM treinada com kernels clássicos (linear, gaussiano e polinomial) e as redes neurais MLP e RBF. Vale salientar que o processo de validação cruzada é o mesmo para todas as técnicas, ou seja, todas são treinadas, validadas e testadas com a mesma divisão do conjunto de dados. Essa escolha permite que as comparações de performance sejam mais precisas.
+
+\subsection{Representação genética e população inicial}
+Como já discutido no Capítulo \ref{chapter:genetic-programming}, a representação genética de um indivíduo é uma das partes cruciais no projeto de um algoritmo de PG. Anteriormente à decisão de qual estrutura será escolhida para representação de um indivíduo, é necessário que se decida qual será o conjunto primitivo a ser utilizado; ou seja, é necessário a definição dos conjuntos de funções e terminais. O conjunto de terminais é composto pelo conjunto de dados específico de cada problema, representado pela matriz $\mathbf{X}$, das variáveis de cada \textit{kernel} (tais como $\sigma$, a abertura da gaussiana), e de constantes efêmeras. O conjunto de funções escolhido é uma união entre os operadores apresentados na Proposição \ref{prop:1} e os \textit{kernels} listados na Tabela \ref{tab:gkr-kernels}.
+
+\begin{table}[H]
+    \caption{Funções de \textit{kernel} utilizados pelo GKR.}
+    \begin{center} \label{tab:gkr-kernels}
+        {
+        \def\arraystretch{1.8}\tabcolsep=10pt
+        \begin{tabular}{l@{\hskip 18pt}l}
+            \hline\noalign{\smallskip}
+            \textbf{Kernel} & \textbf{Equação} \\
+            \noalign{\smallskip}
+            \hline
+            \noalign{\smallskip}
+            Cauchy 		            & $\kappa(\mathbf{x},\mathbf{z}) = \frac{1}{1 + \frac{\|\mathbf{x} - \mathbf{z}\|^2}{\sigma^2}}$ \\
+            Exponential             & $\kappa(\mathbf{x},\mathbf{z}) = e^{-\frac{\|\mathbf{x} - \mathbf{z}\|}{\sigma^2}}$ \\
+            Inverse Multiquadratic  & $\kappa(\mathbf{x},\mathbf{z}) = \frac{1}{\sqrt{\|\mathbf{x} - \mathbf{z}\|^2 + c^2}}$ \\
+            Laplace		            & $\kappa(\mathbf{x},\mathbf{z}) = e^{-\frac{\|\mathbf{x} - \mathbf{z}\|}{\sigma}}$ \\
+            Linear		            & $\kappa(\mathbf{x},\mathbf{z}) = \mathbf{x}^{\top}\mathbf{z}$ \\
+            Multiquadratic          & $\kappa(\mathbf{x},\mathbf{z}) = \sqrt{\|\mathbf{x} - \mathbf{z}\|^2 + c^2}$ \\
+            Polynomial	            & $\kappa(\mathbf{x},\mathbf{z}) = (\mathbf{x}^{\top}\mathbf{z} + 1)^d$ \\
+            Rational Multiquadratic & $\kappa(\mathbf{x},\mathbf{z}) = 1 - \frac{\|\mathbf{x} - \mathbf{z}\|^2}{\|\mathbf{x} - \mathbf{z}\|^2 + c^2}$ \\
+            RBF	                    & $\kappa(\mathbf{x},\mathbf{z}) = e^{-\frac{\|\mathbf{x} - \mathbf{z}\|^2}{\sigma^2}}$ \\
+            Sigmoid         		& $\kappa(\mathbf{x},\mathbf{z}) = \tanh(a\mathbf{x}^{\top}\mathbf{z} + 1)$ \\
+            \hline
+        \end{tabular}
+    }
+    \end{center}
+    \begin{center}
+        \makebox[\width]{Fonte: Autor}.
+    \end{center}
+\end{table}
+
+Vale salientar que, uma vez que as funções de \textit{kernel} recebem dois vetores como entrada (além de seu conjunto de parâmetros), é natural que se utilize uma matriz extra, $\mathbf{Z}$, que represente os padrões $\mathbf{z}$. Entretanto, como essas funções computam valores de similaridade entre padrões de um mesmo conjunto, tem-se que $\mathbf{Z} = \mathbf{X}$. A escolha pela utilização de duas matrizes, ao invés de apenas uma, é puramente por harmonia com a definição de função de \textit{kernel}. Entretanto, é possível a utilização apenas da matriz $\mathbf{X}$.
+
+A representação genética de um indivíduo é a padrão da PG: árvores sintáticas. Para fins de exemplificação, a Figura \ref{fig:kernel-tree} mostra uma árvore que representa o kernel $Polynomial(\mathbf{X}, \mathbf{Z}, 7) + Linear(\mathbf{X}, \mathbf{Z})$.
+
+Para criação da população inicial, foi utilizada a abordagem STGP. A justificativa para essa escolha encontra-se no fato de que, dado a natureza estocástica da PG, árvores sintaticamente inválidas podem ser criadas. Portanto, a STGP fornece um arcabouço robusto para definição de restrições dos tipos que um nó pode ter. Observe a Figura \ref{fig:kernel-tree} como exemplo: enquanto o nó que contém o \textit{kernel} linear só pode receber como entrada duas matrizes que representam o conjunto de dados, o kernel \textit{polinomial} pode receber uma entrada extra (o grau do polinômio, que possui valor inteiro). A Tabela \ref{tab:stgp-constraints} lista as restrições utilizadas para que o GKR crie árvores sintaticamente válidas.
+
+% Tanto o processo de criação de uma árvore quanto o de alteração através dos operadores genéticos, deve obedecer a essas restrições, mantendo a árvore consistente.
+
+% A população inicial é criada utilizando uma combinação das propriedades de fechamendo e das restrições de STGP para criar novas funções kernel válidas e que permaneçam consistentes ao longo do processo de evolução. A consistência de cada indivíduo é mantida porque em STGP, além das restrições padrões da PG, novas restrições são adicionadas a cada nó.
+
+\begin{figure}[H]
+    \caption{Exemplo de \textit{kernel} que pode ser criado pelo GKR. A árvore sintática representa a função $Pol(\mathbf{X}, \mathbf{Z}, 7) + Lin(\mathbf{X}, \mathbf{Z})$, onde $Pol=Polynomial$ e $Lin=Linear$.}
+    \label{fig:kernel-tree}
+    \begin{center}
+        \begin{tikzpicture}[->,>=stealth',auto,
+            black/.style={fill=my_black},
+            red/.style={fill=my_red},
+            default/.style={draw, circle, text=white},
+            level 1/.style={sibling distance=50mm},
+            level 2/.style={sibling distance=20mm}]
+            \node [arn_r, default, black] {+}
+            child{ node [arn_r, default, black] {Pol} 
+                child{ node [arn_r, default, red] {$\mathbf{X}$} }
+                child{ node [arn_r, default, red] {$\mathbf{Z}$} }
+                child{ node [arn_r, default, red] {$\mathbf{7}$} }
+            }
+            child{ node [arn_r, default, black] {Lin}
+                child{ node [arn_r, default, red] {$\mathbf{X}$} }
+                child{ node [arn_r, default, red] {$\mathbf{Z}$} }
+            };
+        \end{tikzpicture}
+    \end{center}
+    \begin{center}
+        \makebox[\width]{Fonte: Autor.}
+    \end{center}
+\end{figure}
+
+\begin{table}[H]
+    \caption{Restrições utilizadas pelo GKR para garantir que as árvores criadas sejam sintaticamente válidas.}
+    \begin{center} \label{tab:stgp-constraints}
+        \begin{tabular}{C@{\hskip 15pt}l}
+            \hline\noalign{\smallskip}
+            \textbf{Nó} & \textbf{Tipo} \\
+            \noalign{\smallskip}
+            \hline
+            \noalign{\smallskip}
+            $\sigma$ & Ponto flutuante \\
+            $\mathbf{X}$ e $\mathbf{Z}$ & Matriz de pontos flutuantes \\
+            $a$, $c$ e $d$ & Número inteiro \\
+            \textit{Kernels} da Tabela \ref{tab:gkr-kernels} & \textit{kernel-function} \\
+            Operadores da Proposição \ref{prop:1} & \textit{kernel-operator} \\
+            \hline
+        \end{tabular}
+    \end{center}
+    \begin{center}
+        \makebox[\width]{Fonte: Autor.}
+    \end{center}
+\end{table}
+
+\subsection{Função de aptidão e método de seleção}
+Para o cálculo da aptidão de um indivíduo, é necessário que sejam computadas predições sobre um conjunto de dados não utilizado durante o treinamento. Isso é realizado através da separação do conjunto de dados de treinamento em dois subconjuntos: treinamento e validação. Detalhes sobre a metodologia de separação podem ser encontrados no Capítulo \ref{chapter:simulations}. Dessa forma, a função de aptidão escolhida é a \textit{root mean square error} (RMSE):
+
+\begin{equation}
+    \label{ch3:eq29}
+    RMSE = \sqrt{\frac{1}{n}\sum_{i=1}^{n}{(y_i - f(\mathbf{x}_i))^2}}
+\end{equation}
+
+O método de seleção utilizado foi a seleção por torneio lexicográfico, proposto por \citeonline{luke2002}. Este operador modifica a seleção por torneio tradicional ao preferir árvores de menor profundidade quando dois ou mais indivíduos possuem o mesmo valor de aptidão (ou mesmo \textit{rank}).
+
+\subsection{Operadores genéticos}
+\lipsum[1-3]
+
+\subsection{Critério de parada}
+O algoritmo sempre é encerrado quando ocorre, pelo menos, uma das duas situações a seguir: (\textit{i}) um número predeterminado de gerações é atingido ou (\textit{ii}) a função de aptidão atinge seu valor máximo (ou seja, foi encontrado o \textit{kernel} ideal).
+
+\subsection{Construção do modelo final}
+\lipsum[1-2]
