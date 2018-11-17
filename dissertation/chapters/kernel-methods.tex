@@ -4,7 +4,7 @@ Um dos principais desafios -- e objetivos -- do aprendizado de máquinas é enco
 
 Ao decorrer das últimas décadas, o uso de métodos de \textit{kernel} tem se mostrado bem sucedido ao permitir a criação de extensões não-lineares de clássicos modelos lineares \cite{abrahamsen2013}. A ideia básica por trás de métodos de \textit{kernel} é realizar um mapeamento do problema original para um espaço de alta -- ou até infinita -- dimensão, chamado de espaço de características, onde métodos lineares são utilizados para buscar as relações entre os padrões. Embora seu uso tenha se popularizado em anos recentes, o trabalho inicial na área costuma ser creditado a \citeonline{aizerman1964}, que utilizando o teorema de Mercer e RKHS, criaram algo muito próximo do que hoje é chamado de truque do \textit{kernel} \cite{schlkopf2004}.
 
-O truque do \textit{kernel} permite a criação de eficientes métodos aplicáveis tanto para problemas de aprendizagem supervisionada quanto não-supervisionada. De particular interesse desta monografia, são as aplicações em problemas de regressão. Entre os métodos estado-da-arte, os membros mais conhecidos são: (\textit{i}) \textit{support vector regression} (SVR) \cite{smola1997}, cuja formulação é derivada da teoria do aprendizado estatístico \cite{vapnik1995,vapnik1998}; (\textit{ii}) \textit{least squares support vector regression} (LSSVR), cuja construção é uma simplificação daquela usada nas SVR; (\textit{iii}) \textit{kernel ridge regression} (KRR) \cite{saunders1998}, que possui uma formulação semelhante à das LSSVR; e por fim, (\textit{iv}) \textit{gaussian processes} (GP) \cite{rasmussen2006}, cuja formulação advém da teoria dos processos estocásticos.
+O truque do \textit{kernel} permite a criação de eficientes métodos aplicáveis tanto para problemas de aprendizagem supervisionada quanto não-supervisionada. De particular interesse desta monografia, são as aplicações em problemas de regressão. Entre os métodos estado-da-arte, os membros mais conhecidos são: (\textit{i}) \textit{support vector regression} (SVR) \cite{smola1997}, cuja formulação é derivada da teoria do aprendizado estatístico \cite{vapnik1995,vapnik1998}; (\textit{ii}) \textit{least squares support vector regression} (LSSVR) \cite{suykens2002}, uma formulação simplificada do SVR; (\textit{iii}) \textit{kernel ridge regression} (KRR) \cite{saunders1998}, que possui uma formulação semelhante à das LSSVR; e por fim, (\textit{iv}) \textit{gaussian processes} (GP) \cite{rasmussen2006}, cuja formulação advém da teoria dos processos estocásticos.
 
 Este capítulo descreve como a teoria de métodos de \textit{kernel} é utilizada no contexto da \textit{\textit{ridge regression}} para a criação do método KRR. Para isso, a seção \ref{sec:linreg} discute modelos de regressão linear, bem como apresenta como o método dos mínimos quadrados é utilizado para estimar %-- de maneira não-enviesada --
 os coeficientes de regressão. A seção \ref{sec:ridge} apresenta a \textit{ridge regression} como um método de penalização da soma dos erros quadráticos. Na seção \ref{sec:kernel-trick} é mostrado como o truque do \textit{kernel} é utilizado para a formulação do KRR. Por fim, a seção \ref{sec:gkr} apresenta a proposta deste trabalho, denominada \textit{Genetic Kernels for Regression} (GKR).
@@ -15,7 +15,7 @@ Modelos de regressão são procedimentos estatísticos que permitem estimar rela
 
 \begin{equation}
     \label{ch2:eq1}
-    y = f(\mathbf{x}) = \mathbf{w}^{\top}\mathbf{x} = \sum_{i=1}^{p}{w_i \cdot x_i}
+    y = f(\mathbf{x}) = \mathbf{w}^{\top}\mathbf{x} = \sum_{j=1}^{p}{w_j \cdot x_j}
 \end{equation}
 
 Usualmente, variáveis à esquerda ($y$) da equação de regressão são chamadas de variáveis dependentes, enquanto as do lado direito ($\mathbf{x}$) são chamadas de variáveis independentes. Entretanto, \citeonline{montgomery2012} argumentam que tais nomenclaturas podem gerar confusão com o conceito de independência estatística. Dessa forma, nomearemos as variáveis da seguinte forma:
@@ -51,7 +51,7 @@ Embora modelos de regressão sejam capazes de encontrar um hiperplano que repres
 
 \begin{equation}
     \label{ch2:eq2}
-    y = f(\mathbf{x}) = \mathbf{w}^{\top}\mathbf{x} + \epsilon = \sum_{i=1}^{p}{w_i \cdot x_i} + \epsilon.
+    y = f(\mathbf{x}) = \mathbf{w}^{\top}\mathbf{x} + \epsilon = \sum_{j=1}^{p}{w_j \cdot x_j} + \epsilon.
 \end{equation}
 
 Para encontrar o hiperplano que melhor se ajustará aos padrões de treinamento, é necessário estimar os melhores valores para os parâmetros $w_i$, chamados de \textbf{coeficientes de regressão}. Quando os dados de treinamento são gerados na forma $(\mathbf{x}, f(\mathbf{x}))$, e há $n = p$ padrões linearmente independentes, é possível encontrar os coeficientes de regressão através da solução do sistema linear
@@ -121,7 +121,7 @@ Por fim, a função de predição para novos padrões é dada por
 Modelos de regressão linear são bastante utilizados pela simplicidade em sua formulação, que permite fácil modelagem de relacionamentos das variáveis de interesse. Entretanto, existem problemas que possuem quantidades insuficientes de padrões para treinamento, ruído no processo de coleta dos dados, multicolinearidade, entre outros. Essas são algumas dificuldades tipicamente encontradas em problemas mal-condicionados. Uma abordagem frequentemente utilizada é restringir a escolha de funções para aquelas que possuem normas pequenas \cite{shawe2004}. Essa abordagem cria um critério de otimização conhecido como \textit{ridge regression}, discutido na seção \ref{sec:ridge}.
 
 \section{\textit{Ridge regression}} \label{sec:ridge}
-O método dos mínimos quadrados possui grande popularidade em áreas como estatística, otimização e aprendizado de máquina; em grande parte, isso deve-se a simplicidade de sua formulação matemática e à suas propriedades analíticas. Uma das propriedades mais interessantes é obtida através do teorema de Gauss-Markov, o qual diz que os coeficientes estimados pelos mínimos quadrados são os melhores estimadores lineares não-enviesados. Por ``melhores'', diz-se que possuem menor variância entre a classe de estimadores lineares não-enviesados, embora não haja garantia de que essa variância seja pequena \cite{montgomery2012}.
+O método dos mínimos quadrados possui grande popularidade em áreas como estatística, otimização e aprendizado de máquinas; em grande parte, isso deve-se a simplicidade de sua formulação matemática e à suas propriedades analíticas. Uma das propriedades mais interessantes é obtida através do teorema de Gauss-Markov, o qual diz que os coeficientes estimados pelos mínimos quadrados são os melhores estimadores lineares não-enviesados. Por ``melhores'', diz-se que possuem menor variância entre a classe de estimadores lineares não-enviesados, embora não haja garantia de que essa variância seja pequena \cite{montgomery2012}.
 
 Diversos métodos foram propostos para solucionar este problema e, de modo geral, são chamados de métodos de redução (do inglês, \textit{shrinkage methods}). Um dos mais utilizados é a regressão \textit{ridge} (do inglês, \textit{ridge regression}) originalmente proposta por \apudonline[p. 305]{hoerl1970a}{montgomery2012} e que funciona como um método de penalização da soma de erros quadráticos, correspondendo a solucionar o problema de minimização
 
@@ -205,7 +205,7 @@ Diferenciando $L(\mathcal{D}, \mathbf{w}, \boldsymbol{\epsilon}, \boldsymbol{\al
 
 \begin{equation}
     \label{ch2:eq20}
-    \epsilon_i = -\frac{1}{4\lambda} \sum_{i=1}^{n} \sum_{j=1}^{n} \alpha_i \alpha_j (\mathbf{x}_i^{\top} \mathbf{x}_j) -\frac{1}{4} \sum_{i=1}^{n} \alpha_i^2 + \sum_{i=1}^{n} y_i \alpha_i.
+    L(\mathcal{D}, \mathbf{w}, \boldsymbol{\epsilon}, \boldsymbol{\alpha}) = -\frac{1}{4\lambda} \sum_{i=1}^{n} \sum_{j=1}^{n} \alpha_i \alpha_j (\mathbf{x}_i^{\top} \mathbf{x}_j) -\frac{1}{4} \sum_{i=1}^{n} \alpha_i^2 + \sum_{i=1}^{n} y_i \alpha_i.
 \end{equation}
 
 \noindent Denotando $K$ como a matriz $n \times n$ dos produtos internos \[ K_{ij} = \mathbf{x}_i^{\top}\mathbf{x}_j, \] e diferenciando (\ref{ch2:eq20}) em relação a $\alpha_i$, obtemos que
@@ -250,7 +250,7 @@ Uma estratégia interessante que tornou-se bastante popular, consiste em mapear 
 
 \begin{equation}
     \label{ch2:eq25}
-    y = f(\mathbf{x}) = \mathbf{w}^{\top} \phi(\mathbf{x}) + \epsilon = \sum_{i=1}^{p}{w_i \cdot \phi(x_i)} + \epsilon
+    y = f(\mathbf{x}) = \mathbf{w}^{\top} \phi(\mathbf{x}) + \epsilon = \sum_{j=1}^{p}{w_j \cdot \phi(x_j)} + \epsilon
 \end{equation}
 
 O uso da ``versão primal'' da \textit{ridge regression}, apesar de possível, pode tornar-se inviável em termos computacionais, por causa da ``maldição da dimensionalidade'' (do inglês, \textit{curse of dimensionality}). Em suma, o fato de haver funções não-lineares que operam em espaços de dimensão infinita torna inviável o uso da \textit{ridge regression} em sua forma primal, pois o modelo de computação atual não opera com o conceito de infinitude. Entretanto, a formulação dual traz a grande vantagem de não precisar representar os padrões de forma explícita no espaço $ \mathcal{H}$, chamado de espaço de características; são necessários apenas os produtos internos entre os pares de padrões
@@ -289,7 +289,7 @@ Finalmente, a nova função de predição é descrita como
     f(\mathbf{x}) = \mathbf{y}^{\top}(K + \boldsymbol{\alpha}\mathbf{I}_n)^{-1}\mathbf{k},
 \end{equation}
 
-\noindent onde $\mathbf{K}$ é a matriz de produtos internos dos vetores $\phi(\mathbf{x}_i), \ldots, \phi(\mathbf{x}_n)$, resultados da aplicação da função de \textit{kernel} $\kappa$ sobre os padrões de treinamento, e $\mathbf{k}$ é o vetor de produtos internos: \[ k_i = \phi(\mathbf{x}_i)^{\top}\mathbf{x}, \quad\quad i = 1,\ldots,n. \]
+\noindent onde $K$ é a matriz de produtos internos dos vetores $\phi(\mathbf{x}_i), \ldots, \phi(\mathbf{x}_n)$, resultados da aplicação da função de \textit{kernel} $\kappa$ sobre os padrões de treinamento, e $\mathbf{k}$ é o vetor de produtos internos: \[ k_i = \phi(\mathbf{x}_i)^{\top}\mathbf{x}, \quad\quad i = 1,\ldots,n. \]
 
 Da equação (\ref{ch2:eq29}) surge o modelo conhecido como \textit{kernel ridge regression} (KRR), que será utilizado no decorrer desta monografia.
 
@@ -302,7 +302,7 @@ Vários métodos de \textit{kernel} tornam-se um problema de otimização no esp
 % \section{Algumas propriedades de \textit{kernels}} \label{sec:kernel-properties}
 
 \section{\textit{Genetic Kernels for Regression} (Proposta)} \label{sec:gkr}
-Encontrar uma função de \textit{kernel} que se adapte a um determinado problema é um estágio crítico no desenvolvimento de métodos de aprendizagem baseados em \textit{kernel}. Isso se deve muito ao fato da necessidade de haver conhecimento \textit{a priori} sobre o problema \cite{shawe2004}. De acordo com \citeonline{scholkopf2001}, a própria escolha do \textit{kernel} representa conhecimento sobre o problema e sua solução. Como já mencionado no Capítulo \ref{chapter:introduction}, uma abordagem bastante utilizada na comunidade acadêmica é utilizar \textit{kernels} já consolidados na literatura, apenas realizando uma busca pelo seu melhor conjunto de parâmetros. A Tabela \ref{tab:commom-kernels} apresenta uma lista das principais funções de \textit{kernels} utilizados e seus respectivos parâmetros.
+Encontrar uma função de \textit{kernel} que se adapte a um determinado problema é um estágio crítico no desenvolvimento de métodos de aprendizagem baseados em \textit{kernels}. Isso se deve muito ao fato da necessidade de haver conhecimento \textit{a priori} sobre o problema \cite{shawe2004}. De acordo com \citeonline{scholkopf2001}, a própria escolha do \textit{kernel} representa conhecimento sobre o problema e sua solução. Como já mencionado no Capítulo \ref{chapter:introduction}, uma abordagem bastante utilizada na comunidade acadêmica é utilizar \textit{kernels} já consolidados na literatura, apenas realizando uma busca pelo seus melhores conjuntos de parâmetros. A Tabela \ref{tab:commom-kernels} apresenta uma lista das principais funções de \textit{kernels} utilizadas e seus respectivos parâmetros.
 
 \begin{table}[H]
     \caption{Funções de \textit{kernel} mais populares na literatura.}
@@ -327,7 +327,7 @@ Encontrar uma função de \textit{kernel} que se adapte a um determinado problem
 % Como alternativa, duas outras abordagens são encontradas na literatura. A primeira concentra-se no aprendizado de \textit{kernels} a partir do conjunto de dados. Essa abordagem funciona através da definição de um conjunto de \textit{kernels}
 % (\textit{Multiple Kernel Learning}, MKL)
 
-Criar \textit{kernels} que adaptem-se a problemas específicos é uma opção mais conveniente, pois o projetista de um modelo baseado em \textit{kernels} não necessita verificar qual \textit{kernel} é melhor para o problema que deve ser solucionado. Entretanto, projetar uma função de \textit{kernel} demanda muito conhecimento acerca do problema, de forma que torna-se muito custoso (em termos de tempo dispendido) realizar esta tarefa manualmente. Uma alternativa é a utilização da construção em blocos. Esse modelo de construção utiliza propriedades de fechamento sobre as funções de \textit{kernel} que permite que novas funções sejam geradas a partir da combinação de outras já conhecidas. A Proposição \ref{prop:1}, adaptada de \cite{shawe2004} lista três operações de fechamento que garantem a construção de novas funções de \textit{kernel} válidas.
+Criar \textit{kernels} que adaptem-se a problemas específicos é uma opção mais conveniente, pois o(a) projetista de um modelo baseado em \textit{kernels} não necessita verificar qual \textit{kernel} é melhor para o problema que deve ser solucionado. Entretanto, projetar uma função de \textit{kernel} demanda muito conhecimento acerca do problema, de forma que torna-se muito custoso (em termos de tempo dispendido) realizar esta tarefa manualmente. Uma alternativa é a utilização da construção em blocos. Esse modelo de construção utiliza operadores de fechamento sobre as funções de \textit{kernel} que permite que novas funções sejam geradas a partir da combinação de outras já conhecidas. A Proposição \ref{prop:1}, adaptada de \cite{shawe2004} lista três operadores de fechamento que garantem a construção de novas funções de \textit{kernel} válidas.
 % Uma alternativa, que vem ganhando bastante popularidade em anos recentes, é a criação de funções de \textit{kernel} específicas para determinados tipos de problemas. Uma forma possível de criação de novos \textit{kernels} é a utilização da construção em blocos. Esse modelo de construção utiliza propriedades de fechamento sobre as funções de \textit{kernel} que permite que novas funções sejam geradas a partir da combinação de outras já conhecidas. A Proposição \ref{prop:1}, adaptada de \cite{shawe2004} lista três operações de fechamento que garantem a construção de novas funções de \textit{kernel} válidas.
 
 \begin{proposition}[Propriedades de fechamento]
@@ -422,7 +422,7 @@ Como já discutido no Capítulo \ref{chapter:genetic-programming}, a representa�
     \end{center}
 \end{table}
 
-Vale salientar que, uma vez que as funções de \textit{kernel} recebem dois vetores como entrada (além de seu conjunto de parâmetros), é natural que se utilize uma matriz extra, $\mathbf{Z}$, que represente os padrões $\mathbf{z}$. Entretanto, como essas funções computam valores de similaridade entre padrões de um mesmo conjunto, tem-se que $\mathbf{Z} = \mathbf{X}$. A escolha pela utilização de duas matrizes, ao invés de apenas uma, é puramente por harmonia com a definição de função de \textit{kernel}. Entretanto, é possível a utilização apenas da matriz $\mathbf{X}$.
+Vale salientar que, uma vez que as funções de \textit{kernel} recebem dois vetores como entrada (além de seu conjunto de parâmetros), é natural que se utilize uma matriz extra, $\mathbf{Z}$, que represente os padrões $\mathbf{z}$. Entretanto, como essas funções computam valores de similaridade entre padrões de um mesmo conjunto, tem-se que $\mathbf{Z} = \mathbf{X}$. A escolha pela utilização de duas matrizes, ao invés de apenas uma, é puramente por harmonia com a definição de função de \textit{kernel}. Assim, é possível a utilização apenas da matriz $\mathbf{X}$.
 
 A representação genética de um indivíduo é a padrão da PG: árvores sintáticas. Para fins de exemplificação, a Figura \ref{fig:kernel-tree} mostra uma árvore que representa o kernel $Polynomial(\mathbf{X}, \mathbf{Z}, 7) + Linear(\mathbf{X}, \mathbf{Z})$.
 

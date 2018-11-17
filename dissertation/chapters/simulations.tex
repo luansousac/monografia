@@ -86,6 +86,7 @@ Na técnica \textit{holdout}, o conjunto de dados é dividido em dois subconjunt
     \caption{Uso do método \textit{holdout} para estimação do risco empírico.}
     \label{fig:holdout}
     \centering
+    \hspace*{1.5cm}
     % \includegraphics[width=.5\linewidth]{holdout.png}
     \begin{tikzpicture}[auto,
         block/.style = {rectangle, draw, fill=none, text width=8em, text centered, minimum height=2em}]
@@ -127,6 +128,8 @@ A realização de todos os experimentos deste trabalho utilizou uma combinação
 
 Existem ainda um conjunto de parâmetros relativos ao arcabouço de PG que precisa ser definido. A população inicial é criada utilizando o método \textit{ramped half-and-half} com faixa de profundidade $[2, 4]$. As probabilidades de uso dos operadores de cruzamento e mutação são 0.85 e 0.15, respectivamente. O método de seleção utilizado foi a seleção por torneio lexicográfico de tamanho 5. O tamanho da população foi definido em 30 indivíduos. Por fim, o número de gerações escolhido foi 30. A Tabela \ref{tab:pg-params} apresenta uma lista destes parâmetros e seus respectivos valores.
 
+% Por último, o parâmetro de regularização foi fixado com valor $0.01$
+
 \begin{table}[H]
     \caption{Resumo dos parâmetros utilizados nas realizações da PG.}
     \label{tab:pg-params}
@@ -153,14 +156,16 @@ Existem ainda um conjunto de parâmetros relativos ao arcabouço de PG que preci
     \end{center}
 \end{table}
 
-Cada experimento foi realizado 30 vezes para cada par \textit{conjunto de dados/modelo} com base na seleção aleatória dos subconjuntos de treinamento e teste. As estimativas das métricas de avaliação foram definidas como uma média geral das 30 realizações.
+\vspace*{-0.7cm}
+
+Cada experimento foi realizado 30 vezes para cada par \textit{conjunto de dados/modelo} com base na seleção aleatória dos subconjuntos de treinamento e teste, com o parâmetro de regularização com valor fixo de $0.01$. As estimativas das métricas de avaliação foram definidas como uma média geral das 30 realizações.
 
 \subsection{Comparação com modelos estado-da-arte}
-Para fins de comparação de desempenho com o modelo proposto, são utilizados os seguintes modelos estado-da-arte: SVR, MLP e RBF. Especificamente para o SVR, foram utilizados os \textit{kernels} linear, polinomial e rbf. Para todos estes modelos, os hiperparâmetros foram obtidos utilizando uma modificação da metodologia do GKR: durante a validação cruzada de \textit{k-folds} é realizada uma busca em grade sobre uma faixa de valores dos hiperparâmetros. Para tornar a comparação mais justa, todos os modelos foram submetidos às mesmas divisões do método \textit{k-fold}, garantindo então que todos sejam submetidos às mesmas variações dos conjuntos de dados. O algoritmo de treinamento do SVR utilizado nos experimentos é o SMO.
+Para fins de comparação de desempenho com o modelo proposto, são utilizados os seguintes modelos estado-da-arte: SVR, MLP e RBF. Especificamente para o SVR, foram utilizados os \textit{kernels} linear, polinomial e rbf. Para todos estes modelos, os hiperparâmetros foram obtidos utilizando uma modificação da metodologia do GKR: durante a validação cruzada de \textit{k-folds} é realizada uma busca em grade sobre uma faixa de valores dos hiperparâmetros. Para tornar a comparação mais justa, todos os modelos foram submetidos às mesmas divisões do método \textit{k-fold}, garantindo então que todos sejam submetidos às mesmas variações dos conjuntos de dados. O algoritmo de treinamento do SVR utilizado nos experimentos é o SMO \cite{platt1999}.
 
-O hiperparâmetro do SVR com \textit{kernel} linear é apenas a constante de regularização \textit{C}, onde foi utilizado a faixa de valores em escala logarítmica $[10^{-3}, 10^3]$. Os outros \textit{kernels} (rbf e polinomial) possuem dois hiperparâmetros, um deles sendo a constante \textit{C} (com a mesma faixa de valores usada para o \textit{kernel} linear). Especificamente para o \textit{kernel} polinomial, foi utilizado a faixa de valores $[2, 4]$ para o grau do polinômio. Já para o SVR com \textit{kernel} rbf foi utilizada a faixa de valores em escala logarítmica $[10^{-3}, 10^3]$.
+O hiperparâmetro do SVR com \textit{kernel} linear é apenas a constante de regularização \textit{C}, onde foi utilizado a faixa de valores em escala logarítmica $[10^{-3}, 10^3]$. Os outros \textit{kernels} (\textit{rbf} e polinomial) possuem dois hiperparâmetros, um deles sendo a constante $\gamma$ (com a mesma faixa de valores usada para o \textit{kernel} linear). Especificamente para o \textit{kernel} polinomial, foi utilizado a faixa de valores $[2, 4]$ para o grau do polinômio. Já para o SVR com \textit{kernel} rbf foi utilizada a faixa de valores em escala logarítmica $[10^{-3}, 10^3]$.
 
-Para a rede neural MLP, o hiperparâmetro é o número de neurônios da camada oculta, em que a faixa de valores escolhida foi $[5, 25]$. O treinamento do MLP é realizado através do algoritmo de Levenberg-Marquardt. Já para a rede RBF, há dois hiperparâmetros: o número de neurônios da camada oculta e a abertura da função gaussiana, $\sigma$. O número de neurônios da camada oculta tem faixa de valores em $[5, 25]$. A abertura da função gaussiana possui faixa de valores $[2^{-5}, 2^5]$.
+Para a rede neural MLP, o hiperparâmetro é o número de neurônios da camada oculta, em que a faixa de valores escolhida foi $[5, 25]$. O treinamento do MLP é realizado através do algoritmo de Levenberg-Marquardt \cite{hagan1994}. Já para a rede RBF \cite{powell1987}, há dois hiperparâmetros: o número de neurônios da camada oculta e a abertura da função gaussiana, $\sigma$. O número de neurônios da camada oculta tem faixa de valores em $[5, 25]$. A abertura da função gaussiana possui faixa de valores $[2^{-5}, 2^5]$.
 
 \section{Resultados e Discussões} \label{sec:results}
 Nesta seção são apresentados os resultados das simulações realizadas para avaliação da proposta deste trabalho. Para isso, o GKR, assim como SVR, MLP e RBF, são aplicados a diversos conjuntos de dados de natureza artificial e real, para problemas de regressão.
@@ -174,7 +179,7 @@ Na Figura \ref{fig:results-real-datasets} são apresentados os resultados obtido
 Ao analisar os gráficos, percebe-se que os modelos GKR e SVR/RBF possuem superfícies bastante semelhantes, conseguindo representar bem os dados. Entre as redes neurais, a MLP é a mais eficiente na generalização dos dados, gerando superfícies mais flexíveis. Já a rede RBF não consegue obter o mesmo poder de generalização que a MLP, pois suas superfícies de decisão sempre seguem o formato da função gaussiana (formato de ``sino''). Nas Figuras \ref{fig:results-real-datasets-3} e \ref{fig:results-real-datasets-5}, entretanto, a rede RBF consegue uma boa representação, uma vez que o domínio de ambas as funções apresentam um formato parecido com partes da função gaussiana.
 
 \begin{figure}[H]
-    \caption{Superfícies de decisão geradas pelos modelos GKR, RBF, SVR/POL e SVR/RBF para os conjuntos de dados artificiais.}
+    \caption{Superfícies de decisão geradas pelos modelos GKR, RBF, SVR/RBF e MLP para os conjuntos de dados artificiais.}
     \label{fig:results-real-datasets}
     \begin{subfigure}[b]{0.5\linewidth}
         \centering
@@ -310,14 +315,15 @@ Também é válido analisar o custo computacional e o tempo total necessário pa
     \end{subfigure}
     \centering \makebox[\width]{Fonte: Autor.}
 \end{figure}
+
 \begin{landscape}
-    \begin{table}[h]
+    \begin{table}
         \centering
         \caption{RMSE e tempo total (treinamento e teste) médios de todas as técnicas sobre os conjuntos de dados reais.}
         \label{tab:results-rmse}
         \begin{tabular}{l|l|c@{\hskip 5pt}c@{\hskip 5pt}c@{\hskip 5pt}c@{\hskip 5pt}c@{\hskip 5pt}c}
             \toprule
-            \multicolumn{2}{l}{\textbf{Conjunto de dados}} & \textbf{GKR} & \textbf{SVR-LIN} & \textbf{SVR-RBF} & \textbf{SVR-POL} & \textbf{MLP} & \textbf{RBF} \\
+            \multicolumn{2}{l}{\textbf{Conjunto de dados}} & \textbf{GKR} & \textbf{SVR/LIN} & \textbf{SVR/RBF} & \textbf{SVR/POL} & \textbf{MLP} & \textbf{RBF} \\
             \midrule
             \multirow{2}{*}{APOL}   & RMSE & $0.1360 \pm 0.0331$ & $\textbf{0.1246} \pm \textbf{0.0264}$ & $0.1294 \pm 0.0248$ & $0.1578 \pm 0.0498$ & $0.1612 \pm 0.0367$ & $0.1913 \pm 0.0649$ \\
                                     & Tempo (s) & $469652.30$ & $249.06$ & $20191.93$ & $37230.50$ & $17948.53$ & $16839.90$ \\
