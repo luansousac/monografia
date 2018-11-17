@@ -47,6 +47,7 @@
 % -------------------------
 
 \usepackage{lscape}
+\usepackage{pdfpages}                           % Pacote para incluir arquivos pdfs
 \usepackage{mathtools}                          % Pacote para cálculos de posições
 \usepackage{multirow}                           % Pacote para multi-linhas em tabelas
 \usepackage[labelformat=simple]{subcaption}     % Para não adicionar parênteses adicionais
@@ -178,7 +179,7 @@
 	pdfauthor={\@author},
 	pdfsubject={\imprimirpreambulo},
     pdfcreator={LaTeX with abnTeX2},
-	pdfkeywords={abnt}{latex}{abntex}{abntex2}{trabalho acadêmico},
+	pdfkeywords={funções de \textit{kernel},}{problemas de regressão,}{programação genética,}{ridge regression,}{truque do \textit{kernel}},
 	colorlinks=true,  	% false: boxed links; true: colored links
 	linkcolor=blue,     % color of internal links
 	citecolor=blue,     % color of links to bibliography
@@ -225,14 +226,17 @@
 % ELEMENTOS PRÉ-TEXTUAIS
 % ----------------------------------------------------------
 % \pretextual
-\imprimircapa % Capa *
-\imprimirfolhaderosto % Folha de rosto *
+\imprimircapa                           % Capa
+\imprimirfolhaderosto                   % Folha de rosto
 
-% \input{pretextual/folhadeaprovacao.pdf} 	% Folha de aprovação (Depois da apresentação)
-\input{pretextual/dedication.tex} 		% Dedicatória
+%\includepdf{fichacatalografica}         % Ficha catalográfica
+%\cleardoublepage
+
+%\input{pretextual/folhadeaprovacao} 	% Folha de aprovação (Depois da apresentação)
+\input{pretextual/dedication} 		    % Dedicatória
 \input{pretextual/acknowledgments} 		% Agradecimentos
 \input{pretextual/epigraph} 			% Epígrafe
-\input{pretextual/resumo} 				% Resumo em português
+\input{pretextual/resumo} 				% Resumo em portuguê`s
 \input{pretextual/abstract} 			% Resumo em inglês
 % ---
 \pdfbookmark[0]{\listfigurename}{lof}   % Lista de ilustrações
@@ -268,7 +272,6 @@
 % \end{KeepFromToc}
 % \cleardoublepage
 % ---
-
 \input{pretextual/abbreviations}  	    % Lista de abreviaturas e siglas
 \input{pretextual/symbols} 	    	    % Lista de símbolos
 % ---
@@ -288,7 +291,6 @@
 \include{chapters/introduction}
 \include{chapters/genetic-programming}
 \include{chapters/kernel-methods}
-% \include{chapters/gkr-methodology}
 \include{chapters/simulations}
 \include{chapters/conclusions}
 

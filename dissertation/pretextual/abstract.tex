@@ -1,10 +1,9 @@
+\setlength{\absparsep}{18pt} % ajusta o espaçamento dos parágrafos do resumo
 \begin{resumo}[Abstract]
- \begin{otherlanguage*}{english}
-   This is the english abstract.
+    \begin{otherlanguage*}{english}
+        Regression models are statistical procedures that allow estimating the relationships between the variables that model a given problem. It is common to separate these relationships into two categories: linear and nonlinear. When it is desired to solve a problem using the Machine Learning (ML) framework, it is common to observe a preference for the use of models that estimate linear relations. The underlying motivations reside in simpler mathematical formulations that have known properties and, also, often result in analytical solutions. However, the notorious disadvantage in using linear models is the lack of generalization power for real problems; this is due to the strong nonlinear nature of various events occurring on a daily basis. In order to escape the need to create nonlinear models (which have an intrinsic complexity higher than that of linear models), the use of a strategy known as the \textit{kernel trick} has become quite popular. Its basic idea is to transform the original space of the problem into a Hilbert space of high - or infinite - dimension, where the patterns present linear behavior; then, being possible the use of linear methods such as \textit{ridge regression} to discover the relations among the variables. The choice of a function that performs this spatial transformation (called a \textit{kernel function}) is hugely dependent on the problem at hand, which led several researchers to use already consolidated functions, such as rbf and polynomial (optimizing their parameters). However, this approach results in variations in performance for different datasets. Creating kernel functions that fit a particular problem is a more convenient solution, but it generates a large workload since it is necessary to know the details of the problem. This dissertation presents a proposal based on Genetic Programming, called \textit{Genetic Kernels for Regression} (GKR), which proposes a method for automatically constructing new adaptive kernel functions for regression problems. The method uses closing operators, which combine existing kernel functions for the creation of new valid kernels. Each function is a syntactic tree, where each node has a set of constraints that guarantee the validity of the kernel created. The proposed model has its performance compared to state-of-the-art models, such as Support Vector Regression with linear, rbf and polynomial kernels, and Artificial Neural Networks of types Multilayer Perceptron (MLP) and Radial Basis Functions (RBF). The results allowed to infer the following: (\textit{i}) the proposed model is quite robust when presented to different datasets; (\textit{ii}) its performance is similar to the SVR, MLP and RBF models, reaching a slight superiority for most of the problems used in the experiments.
 
-   \vspace{\onelineskip}
- 
-   \noindent 
-   \textbf{Keywords}: latex. abntex. text editoration.
- \end{otherlanguage*}
+        \noindent
+        \textbf{Keywords}: genetic programming, kernel functions, kernel trick, regression problems, ridge regression.
+    \end{otherlanguage*}
 \end{resumo}
